@@ -117,28 +117,28 @@ class SoundSystem {
             D5: 587.33
         };
         
-        // Мелодия: D5 D5 C5 B4 C5 A4 A4 D5 D5 C5 B4 D5 D5 C5 B4 C5 A4 B4 G4 A4
+        // Мелодия с настроенными длительностями
         const melody = [
             { note: 'D5', duration: 0.3 },
             { note: 'D5', duration: 0.3 },
-            { note: 'C5', duration: 0.4 },
+            { note: 'C5', duration: 0.45 },
             { note: 'B4', duration: 0.3 },
-            { note: 'C5', duration: 0.4 },
-            { note: 'A4', duration: 0.5 },
+            { note: 'C5', duration: 0.45 },
+            { note: 'A4', duration: 0.54 },
             { note: 'A4', duration: 0.3 },
             { note: 'D5', duration: 0.3 },
             { note: 'D5', duration: 0.3 },
-            { note: 'C5', duration: 0.4 },
+            { note: 'C5', duration: 0.45 },
             { note: 'B4', duration: 0.3 },
-            { note: 'D5', duration: 0.4 },
+            { note: 'D5', duration: 0.45 },
             { note: 'D5', duration: 0.3 },
-            { note: 'C5', duration: 0.4 },
+            { note: 'C5', duration: 0.45 },
             { note: 'B4', duration: 0.3 },
-            { note: 'C5', duration: 0.4 },
-            { note: 'A4', duration: 0.4 },
-            { note: 'B4', duration: 0.4 },
-            { note: 'G4', duration: 0.5 },
-            { note: 'A4', duration: 0.6 }
+            { note: 'C5', duration: 0.45 },
+            { note: 'A4', duration: 0.45 },
+            { note: 'B4', duration: 0.45 },
+            { note: 'G4', duration: 0.67 },
+            { note: 'A4', duration: 0.90 }
         ];
         
         let currentTime = 0;
@@ -146,14 +146,40 @@ class SoundSystem {
         melody.forEach((noteData, index) => {
             setTimeout(() => {
                 const frequency = noteFreqs[noteData.note];
-                this.playTone(frequency, noteData.duration, 'sine', 0.25);
+                this.playTone(frequency, noteData.duration, 'sine', 0.2);
             }, currentTime * 1000);
             
-            currentTime += noteData.duration + 0.05; // Небольшая пауза между нотами
+            currentTime += noteData.duration + 0.04; // Небольшая пауза между нотами
         });
         
         // Возвращаем общую длительность мелодии
         return currentTime * 1000;
+    }
+    
+    startLoopingUpdateMelody() {
+        if (!this.shouldPlay()) return null;
+        
+        console.log('🔄 Запуск зацикленной мелодии обновления');
+        
+        // Воспроизводим первый раз
+        const melodyDuration = this.playUpdateMelody();
+        
+        // Добавляем паузу в 1 секунду между повторениями
+        const totalCycleDuration = melodyDuration + 1000;
+        
+        // Запускаем повторение
+        const intervalId = setInterval(() => {
+            this.playUpdateMelody();
+        }, totalCycleDuration);
+        
+        return intervalId;
+    }
+    
+    stopLoopingMelody(intervalId) {
+        if (intervalId) {
+            clearInterval(intervalId);
+            console.log('⏹️ Зацикленная мелодия остановлена');
+        }
     }
     
     playButtonClick() {

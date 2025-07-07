@@ -102,15 +102,15 @@ class App {
         
         console.log('🔄 Запуск мониторинга обновлений');
         
-        // Проверяем обновления каждые 15 секунд
+        // Проверяем обновления каждые 2 минуты (чтобы избежать rate limiting)
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 15000);
+        }, 120000);
         
-        // Первоначальная проверка через 5 секунд после загрузки
+        // Первоначальная проверка через 10 секунд после загрузки
         setTimeout(() => {
             this.checkForUpdates();
-        }, 5000);
+        }, 10000);
     }
     
     async checkForUpdates() {
@@ -120,11 +120,24 @@ class App {
         if (!config) return;
         
         try {
-            const response = await fetch(`${config.apiUrl}/commits?per_page=1&t=${Date.now()}`);
+            // Добавляем random параметр чтобы избежать кеширования
+            const randomParam = Math.random().toString(36).substring(7);
+            const response = await fetch(`${config.apiUrl}/commits?per_page=1&_=${randomParam}`);
             
             // Если репозиторий не найден, игнорируем
             if (response.status === 404) {
                 console.log(`📋 GitHub репозиторий ${config.owner}/${config.repo} не найден`);
+                return;
+            }
+            
+            // Если превышен лимит запросов, останавливаем проверки полностью
+            if (response.status === 403) {
+                console.log('⚠️ GitHub API rate limit exceeded, останавливаем мониторинг');
+                // Полностью останавливаем мониторинг
+                if (this.updateCheckInterval) {
+                    clearInterval(this.updateCheckInterval);
+                    this.updateCheckInterval = null;
+                }
                 return;
             }
             
@@ -158,7 +171,7 @@ class App {
     handleNewUpdate(commit) {
         this.isUpdating = true;
         
-        // Останавливаем мониторинг
+        // Полностью останавливаем мониторинг после обнаружения обновления
         if (this.updateCheckInterval) {
             clearInterval(this.updateCheckInterval);
             this.updateCheckInterval = null;
@@ -244,7 +257,7 @@ class App {
                 <div class="main-container">
                     <div class="status-icon rotating">🔄</div>
                     <h1 class="main-title">Обновление сайта</h1>
-                    <p class="update-message">Применяем последние изменения...</p>
+                    <p class="update-message">🎵 Применяем последние изменения...</p>
                     
                     <div class="commit-info">
                         <h3>🆕 Последний коммит:</h3>
@@ -258,7 +271,7 @@ class App {
                     
                     <div class="loading-section">
                         <div class="loading-spinner"></div>
-                        <p class="loading-text">Ожидаем завершения сборки...</p>
+                        <p class="loading-text">Воспроизводим мелодию обновления...</p>
                     </div>
                     
                     <div class="auto-refresh">
@@ -271,11 +284,18 @@ class App {
         // Переинициализируем модули
         this.reinitializeModules();
         
+        // СРАЗУ запускаем зацикленную мелодию при появлении страницы
+        let melodyIntervalId = null;
+        if (window.soundSystem) {
+            console.log('🎵 Запускаем мелодию сразу при появлении страницы обновления');
+            melodyIntervalId = window.soundSystem.startLoopingUpdateMelody();
+        }
+        
         // Запускаем 30-секундный таймер
-        this.startSimpleCountdown(30);
+        this.startSimpleCountdown(30, melodyIntervalId);
     }
     
-    startSimpleCountdown(seconds) {
+    startSimpleCountdown(seconds, melodyIntervalId = null) {
         let remaining = seconds;
         const countdownEl = document.getElementById('countdown');
         
@@ -285,22 +305,14 @@ class App {
                 countdownEl.textContent = remaining;
             }
             
-            // Когда остается 8 секунд - начинаем воспроизводить мелодию
-            if (remaining === 8) {
-                console.log('🎵 Начинаем воспроизведение мелодии обновления');
-                if (window.soundSystem) {
-                    const melodyDuration = window.soundSystem.playUpdateMelody();
-                    console.log(`🎵 Длительность мелодии: ${melodyDuration}ms`);
-                }
-                
-                // Обновляем текст
-                if (countdownEl && countdownEl.parentElement) {
-                    countdownEl.parentElement.innerHTML = '🎵 Воспроизводим мелодию обновления... <span id="countdown">' + remaining + '</span>';
-                }
-            }
-            
             if (remaining <= 0) {
                 clearInterval(timer);
+                
+                // Останавливаем мелодию перед перезагрузкой
+                if (melodyIntervalId && window.soundSystem) {
+                    window.soundSystem.stopLoopingMelody(melodyIntervalId);
+                }
+                
                 console.log('⏰ Время ожидания истекло, перезагружаем страницу');
                 window.location.reload();
             }
