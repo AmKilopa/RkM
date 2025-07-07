@@ -52,11 +52,14 @@ class App {
         const bugBtn = document.getElementById('bug-report-btn');
         if (!bugBtn) return;
         
+        const config = window.RkMConfig?.github;
+        if (!config) return;
+        
         const links = {
-            'home': 'https://github.com/AmKilopa/RkM/issues/new?title=HPR',
-            'inventory': 'https://github.com/AmKilopa/RkM/issues/new?title=ICR',
-            'friend-error': 'https://github.com/AmKilopa/RkM/issues/new?title=FER',
-            'substitution': 'https://github.com/AmKilopa/RkM/issues/new?title=SSR'
+            'home': config.getIssueUrl('home'),
+            'inventory': config.getIssueUrl('inventory'),
+            'friend-error': config.getIssueUrl('friendError'),
+            'substitution': config.getIssueUrl('substitution')
         };
         
         bugBtn.onclick = () => window.open(links[this.currentPage], '_blank');
@@ -100,8 +103,25 @@ class App {
     
     // === ПРОВЕРКА ОБНОВЛЕНИЙ GITHUB ===
     async checkForUpdates() {
+        const config = window.RkMConfig?.github;
+        if (!config) {
+            console.log('📋 Конфигурация GitHub не найдена');
+            return;
+        }
+        
         try {
-            const response = await fetch('https://api.github.com/repos/AmKilopa/RkM/commits?per_page=1');
+            const response = await fetch(`${config.apiUrl}/commits?per_page=1`);
+            
+            // Если репозиторий не найден, игнорируем
+            if (response.status === 404) {
+                console.log(`📋 GitHub репозиторий ${config.owner}/${config.repo} не найден - пропускаем проверку обновлений`);
+                return;
+            }
+            
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            
             const commits = await response.json();
             
             if (commits && commits[0]) {
@@ -118,7 +138,8 @@ class App {
                 }
             }
         } catch (error) {
-            // Игнорируем ошибки проверки обновлений
+            // Тихо игнорируем ошибки проверки обновлений
+            console.log('📋 Проверка обновлений недоступна:', error.message);
         }
     }
     
@@ -221,9 +242,12 @@ class App {
     
     // === OFFLINE СТРАНИЦА ===
     showOfflinePage() {
+        const config = window.RkMConfig?.github;
+        const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
+        
         document.body.innerHTML = `
             <!-- Кнопки интерфейса -->
-            <button onclick="window.open('https://github.com/AmKilopa/RkM/issues/new?title=HPR', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
+            <button onclick="window.open('${config ? config.getIssueUrl('home') : '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
             <button onclick="window.changelogModule?.show()" class="changelog-btn">📋 Логи обновлений</button>
             
             <!-- Контейнер для уведомлений -->
@@ -246,7 +270,7 @@ class App {
                             <button onclick="window.location.reload()" class="main-btn">
                                 🔄 Попробовать снова
                             </button>
-                            <button onclick="window.open('https://github.com/AmKilopa/RkM/issues/new?title=HBR', '_blank')" class="main-btn">
+                            <button onclick="window.open('${helpUrl}', '_blank')" class="main-btn">
                                 📝 Подать просьбу
                             </button>
                         </div>

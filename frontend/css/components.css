@@ -410,6 +410,75 @@
     transform: translateY(-2px);
 }
 
+/* === РЕПОЗИТОРИЙ НЕ НАЙДЕН === */
+.repo-not-found {
+    text-align: center;
+    padding: 2rem;
+}
+
+.repo-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.repo-not-found h3 {
+    color: #ffc107;
+    margin-bottom: 1rem;
+}
+
+.repo-not-found p {
+    color: #888;
+    margin-bottom: 1.5rem;
+}
+
+.repo-info {
+    background: #000;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.repo-info strong {
+    color: #fff;
+}
+
+.repo-info ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 1rem;
+}
+
+.repo-info li {
+    color: #ccc;
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+    position: relative;
+}
+
+.repo-info li::before {
+    content: '•';
+    color: #ffc107;
+    position: absolute;
+    left: 0;
+}
+
+.create-repo-btn {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.create-repo-btn:hover {
+    background: linear-gradient(145deg, #1e7e34, #155724);
+    transform: translateY(-2px);
+}
+
 /* Мобильная версия для changelog */
 @media (max-width: 768px) {
     .changelog-modal .modal {

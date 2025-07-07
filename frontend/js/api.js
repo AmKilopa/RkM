@@ -5,6 +5,13 @@ class ApiClient {
     }
     
     getBackendUrl() {
+        // Используем конфигурацию если доступна
+        const config = window.RkMConfig?.api;
+        if (config) {
+            return config.backendUrl;
+        }
+        
+        // Fallback если конфигурация не загружена
         if (window.location.protocol === 'file:') {
             return 'http://localhost:3000/api';
         }

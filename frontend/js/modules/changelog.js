@@ -29,11 +29,31 @@ class ChangelogModule {
         if (this.isLoading) return;
         this.isLoading = true;
         
+        const config = window.RkMConfig?.github;
+        if (!config) {
+            this.renderConfigError();
+            this.isLoading = false;
+            return;
+        }
+        
         try {
-            const response = await fetch('https://api.github.com/repos/AmKilopa/RkM/commits?per_page=20');
+            const response = await fetch(`${config.apiUrl}/commits?per_page=20`);
+            
+            // Если репозиторий не найден
+            if (response.status === 404) {
+                this.renderRepositoryNotFound();
+                this.isLoading = false;
+                return;
+            }
+            
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            
             this.commits = await response.json();
             this.renderCommits();
         } catch (error) {
+            console.log('📋 Ошибка загрузки коммитов:', error.message);
             this.renderError();
         }
         
@@ -71,6 +91,47 @@ class ChangelogModule {
             </div>
             <div class="commits-list">
                 ${commitsHtml}
+            </div>
+        `;
+    }
+    
+    renderRepositoryNotFound() {
+        const content = document.getElementById('changelog-content');
+        if (!content) return;
+        
+        const config = window.RkMConfig?.github;
+        const repoName = config ? `${config.owner}/${config.repo}` : 'AmKilopa/RkM';
+        
+        content.innerHTML = `
+            <div class="repo-not-found">
+                <div class="repo-icon">📂</div>
+                <h3>Репозиторий не найден</h3>
+                <p>GitHub репозиторий "${repoName}" не существует или недоступен</p>
+                <div class="repo-info">
+                    <p><strong>Возможные причины:</strong></p>
+                    <ul>
+                        <li>Репозиторий еще не создан</li>
+                        <li>Репозиторий приватный</li>
+                        <li>Неверное имя репозитория в config.js</li>
+                    </ul>
+                </div>
+                <button onclick="window.open('https://github.com/new', '_blank')" class="create-repo-btn">
+                    📝 Создать репозиторий
+                </button>
+            </div>
+        `;
+    }
+    
+    renderConfigError() {
+        const content = document.getElementById('changelog-content');
+        if (!content) return;
+        
+        content.innerHTML = `
+            <div class="error-message">
+                <div class="error-icon">⚙️</div>
+                <h3>Конфигурация не найдена</h3>
+                <p>Не найден файл config.js или конфигурация GitHub</p>
+                <p>Проверьте что файл js/config.js подключен в index.html</p>
             </div>
         `;
     }
