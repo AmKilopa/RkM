@@ -54,10 +54,10 @@ class App {
         if (!bugBtn) return;
         
         const links = {
-            'home': 'https://github.com/AmKilopa/RkM/issues/new',
+            'home': 'https://github.com/AmKilopa/RkM/issues/new?title=HPR',
             'inventory': 'https://github.com/AmKilopa/RkM/issues/new?title=ICR',
             'friend-error': 'https://github.com/AmKilopa/RkM/issues/new?title=FER',
-            'substitution': 'https://github.com/AmKilopa/RkM/issues/new?title=SPR'
+            'substitution': 'https://github.com/AmKilopa/RkM/issues/new?title=SSR'
         };
         
         bugBtn.onclick = () => window.open(links[this.currentPage], '_blank');
