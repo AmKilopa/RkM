@@ -216,9 +216,6 @@ class App {
                         <button onclick="window.location.reload()" class="main-btn">
                             🔄 Обновить страницу
                         </button>
-                        <button onclick="localStorage.setItem('rkm_last_commit', '${commit.sha}'); window.location.reload()" class="main-btn secondary">
-                            ⏭️ Пропустить обновление
-                        </button>
                     </div>
                     
                     <div class="auto-refresh">

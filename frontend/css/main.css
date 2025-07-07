@@ -548,34 +548,262 @@ body {
     100% { opacity: 1; transform: scale(1); }
 }
 
-/* === МОБИЛЬНАЯ ВЕРСИЯ ДЛЯ СТАТУС СТРАНИЦ === */
+/* === УЛУЧШЕННЫЕ ЭЛЕМЕНТЫ СТАТУС-СТРАНИЦ === */
+
+/* Большой блок информации о коммите */
+.commit-info-large {
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    border: 1px solid #444;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.commit-header-large {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+}
+
+.commit-icon {
+    font-size: 2rem;
+}
+
+.commit-header-large h3 {
+    color: #fff;
+    font-size: 1.3rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+.commit-message-large {
+    color: #17a2b8;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    font-family: 'Courier New', monospace;
+    word-wrap: break-word;
+    text-align: center;
+    padding: 1rem;
+    background: rgba(23, 162, 184, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #17a2b8;
+}
+
+.commit-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.commit-author-large,
+.commit-date-large {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.author-icon,
+.date-icon {
+    font-size: 1.1rem;
+}
+
+.author-name {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.date-text {
+    color: #ccc;
+}
+
+.commit-sha-large {
+    color: #ffc107;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    background: rgba(255, 193, 7, 0.15);
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Улучшенный спиннер */
+.loading-spinner-large {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #333;
+    border-top: 5px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1.5rem;
+}
+
+/* Прогресс точки */
+.progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #333;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: #007bff;
+    animation: pulse 2s infinite;
+}
+
+/* Улучшенный счетчик */
+.auto-refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #888;
+    font-size: 1rem;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.refresh-icon {
+    font-size: 1.2rem;
+}
+
+.countdown-number {
+    color: #ffc107;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* === УЛУЧШЕННАЯ СБОРКА === */
+.build-progress-container {
+    margin: 2rem 0;
+}
+
+.progress-title {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.build-progress-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.build-step-modern {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border-radius: 12px;
+    border: 2px solid #333;
+    transition: all 0.3s ease;
+}
+
+.build-step-modern.active {
+    background: linear-gradient(145deg, #1a2a1a, #2a3a2a);
+    border-color: #28a745;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.step-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.step-text {
+    flex: 1;
+    color: #ccc;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.build-step-modern.active .step-text {
+    color: #28a745;
+}
+
+.step-status {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+/* Netlify информация */
+.netlify-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.netlify-badge {
+    background: linear-gradient(145deg, #00ad9f, #008b7a);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.deploy-status {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+/* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
 @media (max-width: 768px) {
-    .status-page .main-container {
-        padding: 1rem;
-        max-width: calc(100% - 2rem);
-    }
-    
-    .status-icon {
-        font-size: 3rem;
-    }
-    
-    .commit-details {
+    .commit-meta {
         flex-direction: column;
-        gap: 0.5rem;
-        align-items: center;
-    }
-    
-    .build-progress {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-    
-    .buttons-container {
         gap: 1rem;
     }
     
-    .offline-info {
-        padding: 1rem;
+    .commit-author-large,
+    .commit-date-large {
+        justify-content: flex-start;
+    }
+    
+    .build-progress-modern {
+        gap: 0.75rem;
+    }
+    
+    .build-step-modern {
+        padding: 0.75rem 1rem;
+    }
+    
+    .step-icon {
+        font-size: 1.3rem;
+    }
+    
+    .step-text {
+        font-size: 0.9rem;
+    }
+    
+    .netlify-info {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
 
