@@ -6,7 +6,19 @@ class NotificationSystem {
         this.counter = 0;
     }
     
+    // Обновить контейнер при смене DOM
+    updateContainer() {
+        this.container = document.getElementById('notifications-container');
+    }
+    
     show(message, type = 'info', duration = 5000) {
+        // Обновляем контейнер на случай если DOM изменился
+        this.updateContainer();
+        
+        if (!this.container) {
+            return null;
+        }
+        
         const id = `notification-${++this.counter}`;
         
         const notification = document.createElement('div');
