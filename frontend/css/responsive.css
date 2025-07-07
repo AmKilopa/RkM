@@ -1,0 +1,53 @@
+/* === АДАПТИВНЫЕ СТИЛИ === */
+
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .main-btn {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .form-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .modal {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .notifications-container {
+        right: 20px;
+        left: 20px;
+    }
+    
+    .notification {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .bug-report-btn,
+    .back-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .main-container {
+        padding: 1rem;
+    }
+    
+    .buttons-container {
+        gap: 1rem;
+    }
+    
+    .form-input,
+    .btn {
+        padding: 10px 14px;
+    }
+}

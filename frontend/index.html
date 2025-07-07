@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RkM - Главная</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!-- Кнопка "Нашёл баг" -->
+    <button id="bug-report-btn" class="bug-report-btn">Нашёл баг</button>
+    
+    <!-- Контейнер для уведомлений -->
+    <div id="notifications-container" class="notifications-container"></div>
+    
+    <!-- Главная страница -->
+    <div id="home-page" class="page active">
+        <div class="main-container">
+            <h1 class="main-title">RkM</h1>
+            <div class="buttons-container">
+                <button id="inventory-btn" class="main-btn disabled">
+                    Узнать стоимость инвентаря
+                    <span class="status">В разработке</span>
+                </button>
+                <button id="friend-error-btn" class="main-btn disabled">
+                    Friend ошибка
+                    <span class="status">В разработке</span>
+                </button>
+                <button id="substitution-btn" class="main-btn">
+                    Создание подмены
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальные окна -->
+    <div id="modal-overlay" class="modal-overlay"></div>
+    
+    <!-- Подключение скриптов -->
+    <script src="js/notifications.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/modules/inventory.js"></script>
+    <script src="js/modules/friend-error.js"></script>
+    <script src="js/modules/substitution.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

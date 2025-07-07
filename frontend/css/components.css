@@ -1,0 +1,250 @@
+/* === КОМПОНЕНТЫ === */
+
+/* Модальные окна */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    backdrop-filter: blur(8px);
+}
+
+.modal-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal {
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 1px solid #444;
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from { transform: scale(0.9) translateY(-50px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.modal-title {
+    color: #fff;
+    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    font-weight: 300;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+/* === УЛУЧШЕННЫЕ УВЕДОМЛЕНИЯ === */
+.notifications-container {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+}
+
+.notification {
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    min-width: 350px;
+    color: #fff;
+    transform: translateX(450px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 4px;
+    background: #007bff;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success::before {
+    background: linear-gradient(180deg, #28a745, #20c997);
+}
+
+.notification.error::before {
+    background: linear-gradient(180deg, #dc3545, #e74c3c);
+}
+
+.notification.info::before {
+    background: linear-gradient(180deg, #17a2b8, #3498db);
+}
+
+.notification.warning::before {
+    background: linear-gradient(180deg, #ffc107, #f39c12);
+}
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.notification.success .notification-icon::before { content: '✅'; }
+.notification.error .notification-icon::before { content: '❌'; }
+.notification.info .notification-icon::before { content: 'ℹ️'; }
+.notification.warning .notification-icon::before { content: '⚠️'; }
+
+.notification-text {
+    flex: 1;
+    font-size: 1rem;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.notification-close {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.notification-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Анимация прогресса закрытия */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    width: 100%;
+    transform-origin: right;
+    animation: progressBar 5s linear;
+}
+
+@keyframes progressBar {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+/* Специальные стили для разных типов */
+.notification.success {
+    border-color: rgba(40, 167, 69, 0.3);
+    background: linear-gradient(145deg, #1a2e1a, #2a3e2a);
+}
+
+.notification.error {
+    border-color: rgba(220, 53, 69, 0.3);
+    background: linear-gradient(145deg, #2e1a1a, #3e2a2a);
+}
+
+.notification.info {
+    border-color: rgba(23, 162, 184, 0.3);
+    background: linear-gradient(145deg, #1a2a2e, #2a3a3e);
+}
+
+.notification.warning {
+    border-color: rgba(255, 193, 7, 0.3);
+    background: linear-gradient(145deg, #2e2a1a, #3e3a2a);
+}
+
+/* Прогресс бар */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 1.5rem;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+/* Спиннер загрузки */
+.spinner {
+    border: 3px solid #333;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 12px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
