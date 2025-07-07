@@ -522,9 +522,144 @@
     transition: all 0.3s ease;
 }
 
-.create-repo-btn:hover {
+/* === УПРАВЛЕНИЕ ЗВУКОМ === */
+.sound-control {
+    position: fixed;
+    bottom: 80px;
+    left: 25px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.sound-btn {
+    background: linear-gradient(145deg, #6f42c1, #5a2d91);
+    border: none;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sound-btn:hover {
+    background: linear-gradient(145deg, #5a2d91, #4a237a);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+}
+
+.sound-panel {
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 1rem;
+    min-width: 200px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.sound-control:hover .sound-panel {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.sound-panel label {
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.sound-panel input[type="range"] {
+    width: 100%;
+    margin-bottom: 1rem;
+    accent-color: #6f42c1;
+}
+
+.test-btn {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.test-btn:hover {
     background: linear-gradient(145deg, #1e7e34, #155724);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+    .sound-control {
+        bottom: 100px;
+        left: 15px;
+    }
+    
+    .sound-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .sound-panel {
+        min-width: 180px;
+        padding: 0.75rem;
+    }
+}
+
+/* === ВИЗУАЛЬНАЯ ОБРАТНАЯ СВЯЗЬ ДЛЯ ЗВУКОВ === */
+.sound-wave {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border: 2px solid #6f42c1;
+    border-radius: 50%;
+    opacity: 0;
+    animation: soundWave 0.6s ease-out;
+    pointer-events: none;
+    z-index: 3000;
+}
+
+@keyframes soundWave {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2);
+    }
+}
+
+/* Анимация для кнопок при клике */
+.btn-sound-feedback {
+    animation: btnPulse 0.2s ease;
+}
+
+@keyframes btnPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
 }
 
 /* Мобильная версия для changelog */

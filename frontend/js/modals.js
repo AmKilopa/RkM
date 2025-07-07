@@ -32,6 +32,11 @@ class ModalSystem {
             this.overlay.innerHTML = content;
             this.overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Воспроизводим звук открытия модального окна
+            if (window.soundSystem) {
+                window.soundSystem.playModal();
+            }
         }
     }
     

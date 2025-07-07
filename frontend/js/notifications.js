@@ -37,7 +37,13 @@ class NotificationSystem {
         this.notifications.set(id, notification);
         
         // Показать уведомление с анимацией
-        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.add('show');
+            this.createSoundWave();
+        }, 100);
+        
+        // Воспроизводим звук
+        this.playNotificationSound(type);
         
         // Обработчик закрытия
         const closeBtn = notification.querySelector('.notification-close');
@@ -49,6 +55,40 @@ class NotificationSystem {
         }
         
         return id;
+    }
+    
+    // Воспроизведение звука для уведомления
+    playNotificationSound(type) {
+        if (!window.soundSystem) return;
+        
+        switch (type) {
+            case 'success':
+                window.soundSystem.playSuccess();
+                break;
+            case 'error':
+                window.soundSystem.playError();
+                break;
+            case 'warning':
+                window.soundSystem.playWarning();
+                break;
+            case 'info':
+            default:
+                window.soundSystem.playInfo();
+                break;
+        }
+    }
+    
+    // Создание визуального эффекта звуковой волны
+    createSoundWave() {
+        if (!window.soundSystem?.isEnabled()) return;
+        
+        const wave = document.createElement('div');
+        wave.className = 'sound-wave';
+        document.body.appendChild(wave);
+        
+        setTimeout(() => {
+            wave.remove();
+        }, 600);
     }
     
     hide(id) {
