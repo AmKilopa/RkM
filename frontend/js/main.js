@@ -10,8 +10,8 @@ class App {
     init() {
         this.setupEventListeners();
         this.updateBugReportLink();
-        this.startSystemChecks();
         this.startUpdateMonitoring();
+        this.checkBackendStatus();
     }
     
     setupEventListeners() {
@@ -102,6 +102,25 @@ class App {
         
         console.log('🔄 Запуск мониторинга обновлений');
         
+        // Проверяем обновления каждые 5 минут
+        this.updateCheckInterval = setInterval(() => {
+            this.checkForUpdates();
+        }, 300000);
+        
+        // Первоначальная проверка через 30 секунд после загрузки
+        setTimeout(() => {
+            this.checkForUpdates();
+        }, 30000);
+    }===
+    startUpdateMonitoring() {
+        const config = window.RkMConfig?.github;
+        if (!config) {
+            console.log('📋 Конфигурация GitHub не найдена');
+            return;
+        }
+        
+        console.log('🔄 Запуск мониторинга обновлений');
+        
         // Проверяем обновления каждые 2 минуты (чтобы избежать rate limiting)
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
@@ -120,24 +139,29 @@ class App {
         if (!config) return;
         
         try {
-            // Добавляем random параметр чтобы избежать кеширования
-            const randomParam = Math.random().toString(36).substring(7);
-            const response = await fetch(`${config.apiUrl}/commits?per_page=1&_=${randomParam}`);
+            const timestamp = Date.now();
+            const response = await fetch(`${config.apiUrl}/commits?per_page=1&_t=${timestamp}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'RkM-Update-Monitor'
+                },
+                cache: 'no-cache'
+            });
             
-            // Если репозиторий не найден, игнорируем
             if (response.status === 404) {
                 console.log(`📋 GitHub репозиторий ${config.owner}/${config.repo} не найден`);
                 return;
             }
             
-            // Если превышен лимит запросов, останавливаем проверки полностью
             if (response.status === 403) {
-                console.log('⚠️ GitHub API rate limit exceeded, останавливаем мониторинг');
-                // Полностью останавливаем мониторинг
+                console.log('⚠️ GitHub API rate limit exceeded, увеличиваем интервал');
                 if (this.updateCheckInterval) {
                     clearInterval(this.updateCheckInterval);
-                    this.updateCheckInterval = null;
                 }
+                this.updateCheckInterval = setInterval(() => {
+                    this.checkForUpdates();
+                }, 600000); // 10 минут
                 return;
             }
             
@@ -152,19 +176,25 @@ class App {
                 const storedCommit = localStorage.getItem('rkm_last_commit');
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    // Новое обновление найдено!
                     console.log('🆕 Обнаружен новый коммит:', latestCommit.sha.substring(0, 7));
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
-                    // Первый запуск - сохраняем текущий коммит
                     localStorage.setItem('rkm_last_commit', latestCommit.sha);
                     console.log('📋 Сохранен текущий коммит:', latestCommit.sha.substring(0, 7));
                 }
             }
+            
         } catch (error) {
-            // Тихо игнорируем ошибки проверки обновлений
             console.log('📋 Ошибка проверки обновлений:', error.message);
+            if (error.message.includes('fetch')) {
+                if (this.updateCheckInterval) {
+                    clearInterval(this.updateCheckInterval);
+                }
+                this.updateCheckInterval = setInterval(() => {
+                    this.checkForUpdates();
+                }, 600000); // 10 минут при проблемах с сетью
+            }
         }
     }
     
@@ -319,12 +349,7 @@ class App {
         }, 1000);
     }
     
-    // === ОСНОВНЫЕ СИСТЕМНЫЕ ПРОВЕРКИ ===
-    async startSystemChecks() {
-        // Проверяем backend статус
-        setTimeout(() => this.checkBackendStatus(), 2000);
-    }
-    
+    // === ПРОВЕРКА BACKEND ===
     async checkBackendStatus() {
         try {
             const connected = await window.api.testConnection();
@@ -392,7 +417,27 @@ class App {
         }, 10000);
     }
     
-    // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+    // === ТЕСТИРОВАНИЕ СИСТЕМЫ ОБНОВЛЕНИЯ ===
+    testUpdatePage() {
+        console.log('🧪 Тестирование страницы обновления');
+        
+        // Создаем фальшивый коммит для тестирования
+        const fakeCommit = {
+            sha: 'test1234567890abcdef',
+            commit: {
+                message: 'Тестовое обновление для проверки мелодии',
+                author: {
+                    name: 'Test User',
+                    date: new Date().toISOString()
+                }
+            }
+        };
+        
+        // Показываем уведомление как при реальном обновлении
+        this.showUpdateWarning(() => {
+            this.showUpdatePage(fakeCommit);
+        });
+    }
     reinitializeModules() {
         // Переинициализируем системы после смены DOM
         if (window.notifications) {
