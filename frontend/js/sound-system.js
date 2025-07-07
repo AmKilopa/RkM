@@ -181,78 +181,13 @@ class SoundSystem {
     isEnabled() {
         return this.enabled;
     }
-    
-    // === ТЕСТОВЫЕ ЗВУКИ (только для внутреннего использования) ===
-    testSounds() {
-        if (!this.shouldPlay()) {
-            console.log('🔊 Звуки недоступны или отключены');
-            return;
-        }
-        
-        console.log('🔊 Тестируем звуки...');
-        
-        setTimeout(() => this.playSuccess(), 0);
-        setTimeout(() => this.playInfo(), 800);
-        setTimeout(() => this.playWarning(), 1600);
-        setTimeout(() => this.playError(), 2400);
-        setTimeout(() => this.playPageLoad(), 3200);
-    }
 }
 
 // === ГЛОБАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ===
 window.soundSystem = new SoundSystem();
 
-// === ДОБАВЛЯЕМ КНОПКИ УПРАВЛЕНИЯ ЗВУКОМ ===
+// === АВТОЗАПУСК ЗВУКА ЗАГРУЗКИ ===
 document.addEventListener('DOMContentLoaded', () => {
-    // Добавляем кнопку управления звуком в правый нижний угол
-    const soundControl = document.createElement('div');
-    soundControl.className = 'sound-control';
-    soundControl.innerHTML = `
-        <button id="sound-toggle" class="sound-btn" title="Включить/выключить звуки">
-            🔊
-        </button>
-        <div class="sound-panel">
-            <label>Громкость:</label>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="${window.soundSystem.getVolume()}">
-        </div>
-    `;
-    
-    document.body.appendChild(soundControl);
-    
-    // Обработчики событий
-    const toggleBtn = document.getElementById('sound-toggle');
-    const volumeSlider = document.getElementById('volume-slider');
-    
-    // Обновляем иконку кнопки
-    const updateToggleIcon = () => {
-        if (window.soundSystem.isEnabled() && window.soundSystem.getVolume() > 0) {
-            toggleBtn.textContent = '🔊';
-            toggleBtn.title = 'Выключить звуки';
-        } else {
-            toggleBtn.textContent = '🔇';
-            toggleBtn.title = 'Включить звуки';
-        }
-    };
-    
-    // Переключение звуков
-    toggleBtn.addEventListener('click', () => {
-        window.soundSystem.toggle();
-        updateToggleIcon();
-        
-        if (window.soundSystem.isEnabled()) {
-            window.soundSystem.playInfo();
-        }
-    });
-    
-    // Изменение громкости
-    volumeSlider.addEventListener('input', (e) => {
-        window.soundSystem.setVolume(parseFloat(e.target.value));
-        updateToggleIcon();
-    });
-    
-    // Начальное состояние
-    updateToggleIcon();
-    
     // Воспроизводим звук загрузки страницы
     setTimeout(() => {
         window.soundSystem.playPageLoad();
