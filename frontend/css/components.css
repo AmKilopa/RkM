@@ -248,3 +248,204 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* === МОДУЛЬ CHANGELOG === */
+.changelog-modal .modal {
+    max-width: 700px;
+    max-height: 80vh;
+}
+
+.changelog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+}
+
+.changelog-header p {
+    color: #ccc;
+    margin: 0;
+}
+
+.refresh-btn {
+    background: linear-gradient(145deg, #17a2b8, #138496);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(145deg, #138496, #117a8b);
+    transform: scale(1.05);
+}
+
+.commits-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.commits-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.commits-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+
+.commits-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+.commit-item {
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.commit-item:hover {
+    border-color: #555;
+    background: #111;
+}
+
+.commit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.commit-sha {
+    background: #ffc107;
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.commit-time {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.commit-message {
+    color: #17a2b8;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.commit-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.author-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #333;
+}
+
+.commit-author span {
+    color: #28a745;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.commit-date {
+    color: #666;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+}
+
+.error-message {
+    text-align: center;
+    padding: 2rem;
+}
+
+.error-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.error-message h3 {
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.error-message p {
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+.retry-btn {
+    background: linear-gradient(145deg, #dc3545, #c82333);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+    background: linear-gradient(145deg, #c82333, #a71e2a);
+    transform: translateY(-2px);
+}
+
+/* Мобильная версия для changelog */
+@media (max-width: 768px) {
+    .changelog-modal .modal {
+        max-width: calc(100% - 2rem);
+        max-height: calc(100vh - 4rem);
+    }
+    
+    .changelog-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .commit-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .commit-item {
+        padding: 1rem;
+    }
+    
+    .commits-list {
+        max-height: 300px;
+    }
+    
+    .notification {
+        min-width: auto;
+        padding: 1rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .notifications-container {
+        right: 15px;
+        left: 15px;
+        top: 80px;
+    }
+}

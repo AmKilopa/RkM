@@ -306,7 +306,265 @@ body {
     border-left-color: #dc3545;
 }
 
-.log-warning {
+/* === СТРАНИЦА ОБНОВЛЕНИЙ === */
+.update-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.update-container {
+    text-align: center;
+    max-width: 500px;
+    padding: 3rem;
+    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+    border-radius: 20px;
+    border: 1px solid #333;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.update-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.update-container h1 {
+    color: #fff;
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+    font-weight: 300;
+}
+
+.update-message {
+    color: #ccc;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.commit-info {
+    background: #000;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.commit-info h3 {
+    color: #fff;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.commit-message {
+    color: #17a2b8;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-family: 'Courier New', monospace;
+}
+
+.commit-details {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.commit-author {
+    color: #28a745;
+}
+
+.commit-date {
+    color: #888;
+}
+
+.commit-sha {
     color: #ffc107;
-    border-left-color: #ffc107;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #333;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto 1rem;
+}
+
+.loading-text {
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+.reload-btn {
+    background: linear-gradient(145deg, #007bff, #0056b3);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.reload-btn:hover {
+    background: linear-gradient(145deg, #0056b3, #004085);
+    transform: translateY(-2px);
+}
+
+/* === КНОПКА ЛОГИ ОБНОВЛЕНИЙ === */
+.changelog-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.changelog-btn:hover {
+    background: linear-gradient(145deg, #1e7e34, #155724);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+/* === МОБИЛЬНАЯ ВЕРСИЯ === */
+@media (max-width: 768px) {
+    body {
+        font-size: 16px; /* Базовый размер для мобильных */
+    }
+    
+    .main-title {
+        font-size: 3rem;
+        margin-bottom: 3rem;
+    }
+    
+    .main-btn {
+        padding: 1.5rem 2rem;
+        font-size: 1.1rem;
+        min-height: 70px;
+        touch-action: manipulation; /* Оптимизация для touch */
+    }
+    
+    .form-container {
+        margin: 4rem 1rem 2rem;
+        padding: 2rem;
+        height: calc(100vh - 120px);
+    }
+    
+    .modal {
+        margin: 1rem;
+        padding: 2rem;
+        width: calc(100% - 2rem);
+    }
+    
+    .notifications-container {
+        right: 15px;
+        left: 15px;
+        top: 80px; /* Больше отступ сверху для мобильных */
+    }
+    
+    .notification {
+        min-width: auto;
+        padding: 1rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .bug-report-btn,
+    .back-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        top: 15px;
+    }
+    
+    .changelog-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px;
+    }
+    
+    /* Обновления для мобильных */
+    .update-container {
+        padding: 2rem;
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+    
+    .update-container h1 {
+        font-size: 2rem;
+    }
+    
+    .commit-details {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .main-btn {
+        padding: 1.2rem 1.5rem;
+        font-size: 1rem;
+        min-height: 60px;
+    }
+    
+    .bug-report-btn,
+    .back-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .form-container {
+        padding: 1.5rem;
+    }
+    
+    .form-input,
+    .btn {
+        padding: 12px 16px;
+        font-size: 1rem;
+    }
+    
+    .notification {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .update-container {
+        padding: 1.5rem;
+    }
+    
+    .update-icon {
+        font-size: 3rem;
+    }
+    
+    .update-container h1 {
+        font-size: 1.8rem;
+    }
 }

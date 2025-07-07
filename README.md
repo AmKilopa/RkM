@@ -7,7 +7,7 @@
 
 ## Расшифровка 
 
-   - HPR Home Page
-   - ICR Inventory Checker
-   - FER Friend Error
-   - SSR Steam Substitution
+   - HPR Home Page  (Главная страница)
+   - ICR Inventory Checker  (Стоимость инвентаря)
+   - FER Friend Error (Ошибка друга)
+   - SSR Steam Substitution (Подмена)

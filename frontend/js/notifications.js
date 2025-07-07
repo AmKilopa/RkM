@@ -1,4 +1,4 @@
-// === УЛУЧШЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ ===
+// === СИСТЕМА УВЕДОМЛЕНИЙ ===
 class NotificationSystem {
     constructor() {
         this.container = document.getElementById('notifications-container');
@@ -35,11 +35,6 @@ class NotificationSystem {
         if (duration > 0) {
             setTimeout(() => this.hide(id), duration);
         }
-        
-        // Звуковой сигнал (опционально)
-        this.playNotificationSound(type);
-        
-        console.log(`📢 Уведомление [${type.toUpperCase()}]: ${message}`);
         
         return id;
     }
@@ -86,71 +81,7 @@ class NotificationSystem {
             this.hide(id);
         });
     }
-    
-    // Звуковые сигналы (если браузер поддерживает)
-    playNotificationSound(type) {
-        try {
-            // Создаем аудио контекст только если пользователь взаимодействовал со страницей
-            if (typeof AudioContext !== 'undefined' && this.hasUserInteracted) {
-                // Простые звуковые сигналы для разных типов
-                const frequencies = {
-                    success: 800,
-                    error: 300,
-                    warning: 600,
-                    info: 500
-                };
-                
-                this.beep(frequencies[type] || 500, 150);
-            }
-        } catch (error) {
-            // Игнорируем ошибки аудио
-        }
-    }
-    
-    beep(frequency, duration) {
-        try {
-            const audioContext = new AudioContext();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration / 1000);
-        } catch (error) {
-            // Игнорируем ошибки аудио
-        }
-    }
-    
-    // Отслеживаем взаимодействие пользователя для аудио
-    initUserInteraction() {
-        const handler = () => {
-            this.hasUserInteracted = true;
-            document.removeEventListener('click', handler);
-            document.removeEventListener('keydown', handler);
-        };
-        
-        document.addEventListener('click', handler);
-        document.addEventListener('keydown', handler);
-    }
 }
 
 // Инициализация системы уведомлений
 window.notifications = new NotificationSystem();
-
-// Инициализируем отслеживание взаимодействий для аудио
-document.addEventListener('DOMContentLoaded', () => {
-    window.notifications.initUserInteraction();
-    
-    // Тестовое уведомление при загрузке
-    setTimeout(() => {
-        window.notifications.success('Система уведомлений готова к работе!', 3000);
-    }, 1000);
-});
