@@ -103,6 +103,59 @@ class SoundSystem {
         });
     }
     
+    playUpdateMelody() {
+        if (!this.shouldPlay()) return;
+        
+        console.log('🎵 Воспроизводим мелодию обновления');
+        
+        // Частоты нот
+        const noteFreqs = {
+            G4: 392.00,
+            A4: 440.00,
+            B4: 493.88,
+            C5: 523.25,
+            D5: 587.33
+        };
+        
+        // Мелодия: D5 D5 C5 B4 C5 A4 A4 D5 D5 C5 B4 D5 D5 C5 B4 C5 A4 B4 G4 A4
+        const melody = [
+            { note: 'D5', duration: 0.3 },
+            { note: 'D5', duration: 0.3 },
+            { note: 'C5', duration: 0.4 },
+            { note: 'B4', duration: 0.3 },
+            { note: 'C5', duration: 0.4 },
+            { note: 'A4', duration: 0.5 },
+            { note: 'A4', duration: 0.3 },
+            { note: 'D5', duration: 0.3 },
+            { note: 'D5', duration: 0.3 },
+            { note: 'C5', duration: 0.4 },
+            { note: 'B4', duration: 0.3 },
+            { note: 'D5', duration: 0.4 },
+            { note: 'D5', duration: 0.3 },
+            { note: 'C5', duration: 0.4 },
+            { note: 'B4', duration: 0.3 },
+            { note: 'C5', duration: 0.4 },
+            { note: 'A4', duration: 0.4 },
+            { note: 'B4', duration: 0.4 },
+            { note: 'G4', duration: 0.5 },
+            { note: 'A4', duration: 0.6 }
+        ];
+        
+        let currentTime = 0;
+        
+        melody.forEach((noteData, index) => {
+            setTimeout(() => {
+                const frequency = noteFreqs[noteData.note];
+                this.playTone(frequency, noteData.duration, 'sine', 0.25);
+            }, currentTime * 1000);
+            
+            currentTime += noteData.duration + 0.05; // Небольшая пауза между нотами
+        });
+        
+        // Возвращаем общую длительность мелодии
+        return currentTime * 1000;
+    }
+    
     playButtonClick() {
         if (!this.shouldPlay()) return;
         

@@ -261,14 +261,8 @@ class App {
                         <p class="loading-text">Ожидаем завершения сборки...</p>
                     </div>
                     
-                    <div class="buttons-container">
-                        <button onclick="window.location.reload()" class="main-btn">
-                            🔄 Обновить страницу
-                        </button>
-                    </div>
-                    
                     <div class="auto-refresh">
-                        Автоматическое обновление через <span id="countdown">30</span> секунд
+                        🎵 Сайт автоматически перезагрузится через <span id="countdown">30</span> секунд
                     </div>
                 </div>
             </div>
@@ -289,6 +283,20 @@ class App {
             remaining--;
             if (countdownEl) {
                 countdownEl.textContent = remaining;
+            }
+            
+            // Когда остается 8 секунд - начинаем воспроизводить мелодию
+            if (remaining === 8) {
+                console.log('🎵 Начинаем воспроизведение мелодии обновления');
+                if (window.soundSystem) {
+                    const melodyDuration = window.soundSystem.playUpdateMelody();
+                    console.log(`🎵 Длительность мелодии: ${melodyDuration}ms`);
+                }
+                
+                // Обновляем текст
+                if (countdownEl && countdownEl.parentElement) {
+                    countdownEl.parentElement.innerHTML = '🎵 Воспроизводим мелодию обновления... <span id="countdown">' + remaining + '</span>';
+                }
             }
             
             if (remaining <= 0) {
