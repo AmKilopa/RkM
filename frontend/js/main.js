@@ -112,31 +112,28 @@ class App {
     }
     
     startUpdateMonitoring() {
-        const config = window.RkMConfig?.github;
-        if (!config) {
-            console.log('📋 Конфигурация GitHub не найдена');
-            return;
-        }
+        console.log('🔧 Инициализация мониторинга обновлений');
+        console.log('🔗 Backend URL:', window.api?.baseUrl || 'не определен');
         
         // Очищаем localStorage от старых данных для предотвращения проблем
         try {
             const oldCommit = localStorage.getItem('rkm_last_commit');
-            console.log('🔄 Запуск мониторинга обновлений, текущий коммит:', oldCommit ? oldCommit.substring(0, 7) : 'none');
+            console.log('🔄 Запуск мониторинга через backend, последний коммит:', oldCommit ? oldCommit.substring(0, 7) : 'none');
         } catch (e) {
             console.log('⚠️ Проблемы с localStorage, используем временное хранение');
         }
         
-        // Увеличиваем интервал до 10 минут для избежания rate limiting
+        // Проверяем обновления каждые 5 минут через backend
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 600000); // 10 минут
+        }, 300000); // 5 минут
         
-        // Первая проверка через 30 секунд
+        // Первая проверка через 10 секунд
         setTimeout(() => {
             this.checkForUpdates();
-        }, 30000);
+        }, 10000);
         
-        console.log('⏰ Мониторинг настроен: проверка каждые 10 минут, первая через 30 секунд');
+        console.log('⏰ Мониторинг настроен: проверка через backend каждые 5 минут, первая через 10 секунд');
     }
     
     async checkForUpdates() {
@@ -145,110 +142,35 @@ class App {
             return;
         }
         
-        const config = window.RkMConfig?.github;
-        if (!config) return;
-        
-        console.log('🔍 Начинаем проверку обновлений...');
+        console.log('🔍 Проверяем обновления через backend...');
         
         try {
-            // Агрессивное предотвращение кеширования
-            const timestamp = Date.now();
-            const randomParam = Math.random().toString(36).substring(7);
-            const url = `${config.apiUrl}/commits?per_page=1&_t=${timestamp}&_r=${randomParam}`;
+            // Проверяем обновления через backend вместо прямого обращения к GitHub
+            const result = await window.api.checkForUpdates();
             
-            console.log('📡 Запрос к GitHub API:', url);
+            console.log('📊 Ответ backend:', result);
             
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'RkM-Update-Monitor',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                },
-                cache: 'no-store' // Самый строгий режим кеширования
-            });
-            
-            console.log(`📊 Ответ GitHub API: ${response.status} ${response.statusText}`);
-            
-            if (response.status === 404) {
-                console.log(`📋 GitHub репозиторий ${config.owner}/${config.repo} не найден`);
+            if (result.success && result.hasUpdate) {
+                console.log('🆕 BACKEND СООБЩАЕТ О НОВОМ ОБНОВЛЕНИИ!');
+                console.log('📝 Новый коммит:', result.latestCommit);
+                
+                this.handleNewUpdate(result.latestCommit);
                 return;
-            }
-            
-            if (response.status === 403) {
-                const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
-                const rateLimitReset = response.headers.get('X-RateLimit-Reset');
-                
-                console.log(`⚠️ GitHub API rate limit exceeded`);
-                console.log(`📊 Remaining: ${rateLimitRemaining}, Reset: ${rateLimitReset ? new Date(rateLimitReset * 1000) : 'Unknown'}`);
-                
-                // Полностью останавливаем проверки при rate limiting
-                if (this.updateCheckInterval) {
-                    clearInterval(this.updateCheckInterval);
-                    this.updateCheckInterval = null;
-                }
-                
-                // Перезапускаем через 1 час
-                console.log('🕐 Перезапуск мониторинга через 1 час из-за rate limiting');
-                setTimeout(() => {
-                    this.startUpdateMonitoring();
-                }, 3600000); // 1 час
-                
-                return;
-            }
-            
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-            }
-            
-            const commits = await response.json();
-            console.log('📋 Получены данные о коммитах:', commits.length);
-            
-            if (commits && commits[0]) {
-                const latestCommit = commits[0];
-                console.log('📌 Последний коммит:', latestCommit.sha.substring(0, 7), '-', latestCommit.commit.message.substring(0, 50));
-                
-                // Безопасная работа с localStorage
-                let storedCommit = null;
-                try {
-                    storedCommit = localStorage.getItem('rkm_last_commit');
-                } catch (e) {
-                    console.log('⚠️ localStorage недоступен, используем сессионное хранение');
-                    storedCommit = sessionStorage.getItem('rkm_last_commit');
-                }
-                
-                console.log('💾 Сохраненный коммит:', storedCommit ? storedCommit.substring(0, 7) : 'none');
-                
-                if (storedCommit && storedCommit !== latestCommit.sha) {
-                    console.log('🆕 ОБНАРУЖЕН НОВЫЙ КОММИТ! Запуск процедуры обновления');
-                    this.handleNewUpdate(latestCommit);
-                    return;
-                } else if (!storedCommit) {
-                    // Сохраняем текущий коммит
-                    try {
-                        localStorage.setItem('rkm_last_commit', latestCommit.sha);
-                        console.log('💾 Коммит сохранен в localStorage');
-                    } catch (e) {
-                        sessionStorage.setItem('rkm_last_commit', latestCommit.sha);
-                        console.log('💾 Коммит сохранен в sessionStorage (fallback)');
-                    }
-                    console.log('📋 Первый запуск - сохранен текущий коммит:', latestCommit.sha.substring(0, 7));
-                } else {
-                    console.log('✅ Новых коммитов нет');
-                }
+            } else if (result.success) {
+                console.log('✅ Новых обновлений нет');
+            } else {
+                console.log('⚠️ Backend не смог проверить обновления:', result.error);
             }
             
         } catch (error) {
-            console.log('❌ Ошибка проверки обновлений:', error.message);
+            console.log('❌ Ошибка проверки обновлений через backend:', error.message);
             
-            // При любой ошибке увеличиваем интервал
+            // При ошибке backend увеличиваем интервал проверки
             if (this.updateCheckInterval) {
                 clearInterval(this.updateCheckInterval);
             }
             
-            console.log('🔄 Перезапуск мониторинга через 15 минут из-за ошибки');
+            console.log('🔄 Перезапуск мониторинга через 15 минут из-за ошибки backend');
             this.updateCheckInterval = setInterval(() => {
                 this.checkForUpdates();
             }, 900000); // 15 минут при ошибках
@@ -256,8 +178,8 @@ class App {
     }
     
     handleNewUpdate(commit) {
-        console.log('🚀 НАЧИНАЕМ ПРОЦЕДУРУ ОБНОВЛЕНИЯ');
-        console.log('📝 Коммит:', commit.sha.substring(0, 7), '-', commit.commit.message);
+        console.log('🚀 НАЧИНАЕМ ПРОЦЕДУРУ ОБНОВЛЕНИЯ (данные от backend)');
+        console.log('📝 Коммит:', commit.sha?.substring(0, 7) || 'unknown', '-', commit.commit?.message || commit.message || 'no message');
         
         this.isUpdating = true;
         
@@ -339,16 +261,23 @@ class App {
     }
     
     showUpdatePage(commit) {
-        console.log('📄 Создаем страницу обновления');
+        console.log('📄 Создаем страницу обновления (данные от backend)');
         
         // Сохраняем новый коммит
+        const commitSha = commit.sha || commit.id || 'unknown';
         try {
-            localStorage.setItem('rkm_last_commit', commit.sha);
+            localStorage.setItem('rkm_last_commit', commitSha);
             console.log('💾 Новый коммит сохранен в localStorage');
         } catch (e) {
-            sessionStorage.setItem('rkm_last_commit', commit.sha);
+            sessionStorage.setItem('rkm_last_commit', commitSha);
             console.log('💾 Новый коммит сохранен в sessionStorage (fallback)');
         }
+        
+        // Обработка данных коммита от backend
+        const commitMessage = commit.commit?.message || commit.message || 'Обновление получено от backend';
+        const authorName = commit.commit?.author?.name || commit.author?.name || 'Backend';
+        const authorDate = commit.commit?.author?.date || commit.author?.date || new Date().toISOString();
+        const shortSha = commitSha.substring(0, 7);
         
         document.body.innerHTML = `
             <button onclick="window.open('https://github.com/AmKilopa/RkM/issues/new?title=HPR', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
@@ -365,17 +294,18 @@ class App {
                     
                     <div class="commit-info">
                         <h3>🆕 Последний коммит:</h3>
-                        <div class="commit-message">${commit.commit.message}</div>
+                        <div class="commit-message">${commitMessage}</div>
                         <div class="commit-details">
-                            <span class="commit-author">👤 ${commit.commit.author.name}</span>
-                            <span class="commit-date">📅 ${new Date(commit.commit.author.date).toLocaleString('ru')}</span>
+                            <span class="commit-author">👤 ${authorName}</span>
+                            <span class="commit-date">📅 ${new Date(authorDate).toLocaleString('ru')}</span>
                         </div>
-                        <div class="commit-sha">#${commit.sha.substring(0, 7)}</div>
+                        <div class="commit-sha">#${shortSha}</div>
                     </div>
                     
                     <div class="loading-section">
                         <div class="loading-spinner"></div>
                         <p class="loading-text">Воспроизводим мелодию обновления...</p>
+                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Обновление получено через backend</p>
                     </div>
                     
                     <div class="auto-refresh">
@@ -404,14 +334,14 @@ class App {
     
     // Тестовая функция для проверки системы обновления
     testUpdateSystem() {
-        console.log('🧪 ТЕСТИРОВАНИЕ СИСТЕМЫ ОБНОВЛЕНИЯ');
+        console.log('🧪 ТЕСТИРОВАНИЕ СИСТЕМЫ ОБНОВЛЕНИЯ (через backend)');
         
         const fakeCommit = {
             sha: 'test1234567890abcdef',
             commit: {
-                message: 'Тестовое обновление для проверки системы',
+                message: 'Тестовое обновление для проверки системы через backend',
                 author: {
-                    name: 'Test User',
+                    name: 'Backend Test',
                     date: new Date().toISOString()
                 }
             }
@@ -444,12 +374,18 @@ class App {
     }
     
     async checkBackendStatus() {
+        console.log('🏥 Проверяем статус backend:', window.api?.baseUrl || 'URL не определен');
+        
         try {
             const connected = await window.api.testConnection();
             if (!connected) {
+                console.log('❌ Backend недоступен, показываем offline страницу');
                 this.showOfflinePage();
+            } else {
+                console.log('✅ Backend доступен и работает');
             }
         } catch (error) {
+            console.log('❌ Ошибка при проверке backend:', error.message);
             this.showOfflinePage();
         }
     }
@@ -457,6 +393,8 @@ class App {
     showOfflinePage() {
         const config = window.RkMConfig?.github;
         const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
+        
+        console.log('📴 Показываем offline страницу (backend недоступен)');
         
         document.body.innerHTML = `
             <button onclick="window.open('${config ? config.getIssueUrl('home') : '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
@@ -472,6 +410,7 @@ class App {
                     
                     <div class="offline-content">
                         <div class="offline-info">
+                            <p>Backend: https://rkm-9vui.onrender.com</p>
                             <p>Если сайт долго не работает, вы можете подать просьбу</p>
                         </div>
                         
@@ -496,8 +435,10 @@ class App {
         this.reinitializeModules();
         
         setInterval(async () => {
+            console.log('🔄 Автопроверка backend...');
             const connected = await window.api.testConnection();
             if (connected) {
+                console.log('✅ Backend восстановлен, перезагружаем страницу');
                 window.location.reload();
             }
         }, 10000);
@@ -519,6 +460,7 @@ class App {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
     console.log('🚀 RkM приложение запущено');
+    console.log('🔗 Backend: https://rkm-9vui.onrender.com');
     console.log('🧪 Для тестирования системы обновления используйте: window.app.testUpdateSystem()');
     
     // Добавляем информацию о браузере для диагностики
