@@ -8,10 +8,34 @@ class App {
     }
     
     init() {
+        console.log('🔧 Инициализация приложения');
+        
+        // Очищаем кеш браузера для GitHub API
+        this.clearApiCache();
+        
         this.setupEventListeners();
         this.updateBugReportLink();
         this.startUpdateMonitoring();
         this.checkBackendStatus();
+    }
+    
+    // Очистка кеша API для предотвращения проблем
+    clearApiCache() {
+        try {
+            // Очищаем sessionStorage от старых данных
+            const keysToRemove = [];
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                if (key && key.includes('github') || key && key.includes('api')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => sessionStorage.removeItem(key));
+            
+            console.log('🧹 Кеш API очищен');
+        } catch (e) {
+            console.log('⚠️ Не удалось очистить кеш:', e.message);
+        }
     }
     
     setupEventListeners() {
@@ -94,33 +118,59 @@ class App {
             return;
         }
         
-        console.log('🔄 Запуск мониторинга обновлений');
+        // Очищаем localStorage от старых данных для предотвращения проблем
+        try {
+            const oldCommit = localStorage.getItem('rkm_last_commit');
+            console.log('🔄 Запуск мониторинга обновлений, текущий коммит:', oldCommit ? oldCommit.substring(0, 7) : 'none');
+        } catch (e) {
+            console.log('⚠️ Проблемы с localStorage, используем временное хранение');
+        }
         
+        // Увеличиваем интервал до 10 минут для избежания rate limiting
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 120000); // 2 минуты
+        }, 600000); // 10 минут
         
+        // Первая проверка через 30 секунд
         setTimeout(() => {
             this.checkForUpdates();
-        }, 10000); // первая проверка через 10 секунд
+        }, 30000);
+        
+        console.log('⏰ Мониторинг настроен: проверка каждые 10 минут, первая через 30 секунд');
     }
     
     async checkForUpdates() {
-        if (this.isUpdating) return;
+        if (this.isUpdating) {
+            console.log('🔄 Уже в процессе обновления, пропускаем проверку');
+            return;
+        }
         
         const config = window.RkMConfig?.github;
         if (!config) return;
         
+        console.log('🔍 Начинаем проверку обновлений...');
+        
         try {
+            // Агрессивное предотвращение кеширования
             const timestamp = Date.now();
-            const response = await fetch(`${config.apiUrl}/commits?per_page=1&_t=${timestamp}`, {
+            const randomParam = Math.random().toString(36).substring(7);
+            const url = `${config.apiUrl}/commits?per_page=1&_t=${timestamp}&_r=${randomParam}`;
+            
+            console.log('📡 Запрос к GitHub API:', url);
+            
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'RkM-Update-Monitor'
+                    'User-Agent': 'RkM-Update-Monitor',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 },
-                cache: 'no-cache'
+                cache: 'no-store' // Самый строгий режим кеширования
             });
+            
+            console.log(`📊 Ответ GitHub API: ${response.status} ${response.statusText}`);
             
             if (response.status === 404) {
                 console.log(`📋 GitHub репозиторий ${config.owner}/${config.repo} не найден`);
@@ -128,79 +178,127 @@ class App {
             }
             
             if (response.status === 403) {
-                console.log('⚠️ GitHub API rate limit exceeded, увеличиваем интервал');
+                const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+                const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+                
+                console.log(`⚠️ GitHub API rate limit exceeded`);
+                console.log(`📊 Remaining: ${rateLimitRemaining}, Reset: ${rateLimitReset ? new Date(rateLimitReset * 1000) : 'Unknown'}`);
+                
+                // Полностью останавливаем проверки при rate limiting
                 if (this.updateCheckInterval) {
                     clearInterval(this.updateCheckInterval);
+                    this.updateCheckInterval = null;
                 }
-                this.updateCheckInterval = setInterval(() => {
-                    this.checkForUpdates();
-                }, 600000); // 10 минут
+                
+                // Перезапускаем через 1 час
+                console.log('🕐 Перезапуск мониторинга через 1 час из-за rate limiting');
+                setTimeout(() => {
+                    this.startUpdateMonitoring();
+                }, 3600000); // 1 час
+                
                 return;
             }
             
             if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
+                throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
             }
             
             const commits = await response.json();
+            console.log('📋 Получены данные о коммитах:', commits.length);
             
             if (commits && commits[0]) {
                 const latestCommit = commits[0];
-                const storedCommit = localStorage.getItem('rkm_last_commit');
+                console.log('📌 Последний коммит:', latestCommit.sha.substring(0, 7), '-', latestCommit.commit.message.substring(0, 50));
+                
+                // Безопасная работа с localStorage
+                let storedCommit = null;
+                try {
+                    storedCommit = localStorage.getItem('rkm_last_commit');
+                } catch (e) {
+                    console.log('⚠️ localStorage недоступен, используем сессионное хранение');
+                    storedCommit = sessionStorage.getItem('rkm_last_commit');
+                }
+                
+                console.log('💾 Сохраненный коммит:', storedCommit ? storedCommit.substring(0, 7) : 'none');
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    console.log('🆕 Обнаружен новый коммит:', latestCommit.sha.substring(0, 7));
+                    console.log('🆕 ОБНАРУЖЕН НОВЫЙ КОММИТ! Запуск процедуры обновления');
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
-                    localStorage.setItem('rkm_last_commit', latestCommit.sha);
-                    console.log('📋 Сохранен текущий коммит:', latestCommit.sha.substring(0, 7));
+                    // Сохраняем текущий коммит
+                    try {
+                        localStorage.setItem('rkm_last_commit', latestCommit.sha);
+                        console.log('💾 Коммит сохранен в localStorage');
+                    } catch (e) {
+                        sessionStorage.setItem('rkm_last_commit', latestCommit.sha);
+                        console.log('💾 Коммит сохранен в sessionStorage (fallback)');
+                    }
+                    console.log('📋 Первый запуск - сохранен текущий коммит:', latestCommit.sha.substring(0, 7));
+                } else {
+                    console.log('✅ Новых коммитов нет');
                 }
             }
             
         } catch (error) {
-            console.log('📋 Ошибка проверки обновлений:', error.message);
-            if (error.message.includes('fetch')) {
-                if (this.updateCheckInterval) {
-                    clearInterval(this.updateCheckInterval);
-                }
-                this.updateCheckInterval = setInterval(() => {
-                    this.checkForUpdates();
-                }, 600000); // 10 минут при проблемах с сетью
+            console.log('❌ Ошибка проверки обновлений:', error.message);
+            
+            // При любой ошибке увеличиваем интервал
+            if (this.updateCheckInterval) {
+                clearInterval(this.updateCheckInterval);
             }
+            
+            console.log('🔄 Перезапуск мониторинга через 15 минут из-за ошибки');
+            this.updateCheckInterval = setInterval(() => {
+                this.checkForUpdates();
+            }, 900000); // 15 минут при ошибках
         }
     }
     
     handleNewUpdate(commit) {
+        console.log('🚀 НАЧИНАЕМ ПРОЦЕДУРУ ОБНОВЛЕНИЯ');
+        console.log('📝 Коммит:', commit.sha.substring(0, 7), '-', commit.commit.message);
+        
         this.isUpdating = true;
         
+        // Полностью останавливаем мониторинг
         if (this.updateCheckInterval) {
             clearInterval(this.updateCheckInterval);
             this.updateCheckInterval = null;
+            console.log('⏹️ Мониторинг остановлен');
         }
         
-        console.log('🚀 Запуск процедуры обновления');
+        console.log('⏰ Показываем 5-секундное предупреждение...');
         
         this.showUpdateWarning(() => {
+            console.log('✅ Предупреждение завершено, показываем страницу обновления');
             this.showUpdatePage(commit);
         });
     }
     
     showUpdateWarning(callback) {
+        console.log('⚠️ Показываем предупреждение об обновлении');
+        
         let countdown = 5;
         
         const notificationId = window.notifications?.show(
             this.createCountdownHTML(countdown),
             'warning',
-            0
+            0 // Не исчезает автоматически
         );
         
+        console.log('📢 ID уведомления:', notificationId);
+        
+        // Звуковое предупреждение
         if (window.soundSystem) {
+            console.log('🔊 Воспроизводим звук предупреждения');
             window.soundSystem.playWarning();
         }
         
+        // Обновляем таймер каждую секунду
         const timer = setInterval(() => {
             countdown--;
+            console.log('⏰ Обратный отсчет:', countdown);
             
             const notification = document.getElementById(notificationId);
             if (notification) {
@@ -208,15 +306,22 @@ class App {
                 if (textEl) {
                     textEl.innerHTML = this.createCountdownHTML(countdown);
                 }
+            } else {
+                console.log('⚠️ Уведомление не найдено в DOM');
             }
             
             if (countdown <= 0) {
                 clearInterval(timer);
+                console.log('⏰ Обратный отсчет завершен');
                 
+                // Скрываем уведомление
                 if (notificationId) {
                     window.notifications?.hide(notificationId);
+                    console.log('🗑️ Уведомление скрыто');
                 }
                 
+                // Выполняем callback
+                console.log('▶️ Выполняем callback');
                 callback();
             }
         }, 1000);
@@ -234,7 +339,16 @@ class App {
     }
     
     showUpdatePage(commit) {
-        localStorage.setItem('rkm_last_commit', commit.sha);
+        console.log('📄 Создаем страницу обновления');
+        
+        // Сохраняем новый коммит
+        try {
+            localStorage.setItem('rkm_last_commit', commit.sha);
+            console.log('💾 Новый коммит сохранен в localStorage');
+        } catch (e) {
+            sessionStorage.setItem('rkm_last_commit', commit.sha);
+            console.log('💾 Новый коммит сохранен в sessionStorage (fallback)');
+        }
         
         document.body.innerHTML = `
             <button onclick="window.open('https://github.com/AmKilopa/RkM/issues/new?title=HPR', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
@@ -271,15 +385,39 @@ class App {
             </div>
         `;
         
+        console.log('🔄 Переинициализируем модули');
         this.reinitializeModules();
         
+        // СРАЗУ запускаем зацикленную мелодию
         let melodyIntervalId = null;
         if (window.soundSystem) {
-            console.log('🎵 Запускаем мелодию сразу при появлении страницы обновления');
+            console.log('🎵 Запускаем зацикленную мелодию обновления');
             melodyIntervalId = window.soundSystem.startLoopingUpdateMelody();
+        } else {
+            console.log('⚠️ Система звуков недоступна');
         }
         
+        // Запускаем 30-секундный таймер
+        console.log('⏲️ Запускаем 30-секундный таймер перезагрузки');
         this.startSimpleCountdown(30, melodyIntervalId);
+    }
+    
+    // Тестовая функция для проверки системы обновления
+    testUpdateSystem() {
+        console.log('🧪 ТЕСТИРОВАНИЕ СИСТЕМЫ ОБНОВЛЕНИЯ');
+        
+        const fakeCommit = {
+            sha: 'test1234567890abcdef',
+            commit: {
+                message: 'Тестовое обновление для проверки системы',
+                author: {
+                    name: 'Test User',
+                    date: new Date().toISOString()
+                }
+            }
+        };
+        
+        this.handleNewUpdate(fakeCommit);
     }
     
     startSimpleCountdown(seconds, melodyIntervalId = null) {
@@ -381,4 +519,9 @@ class App {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
     console.log('🚀 RkM приложение запущено');
+    console.log('🧪 Для тестирования системы обновления используйте: window.app.testUpdateSystem()');
+    
+    // Добавляем информацию о браузере для диагностики
+    console.log('🌐 Браузер:', navigator.userAgent);
+    console.log('🔄 Поддержка localStorage:', typeof(Storage) !== "undefined");
 });
