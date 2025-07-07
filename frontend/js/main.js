@@ -1,4 +1,4 @@
-// === ГЛАВНЫЙ СКРИПТ ===
+// Главный скрипт
 class App {
     constructor() {
         this.currentPage = 'home';
@@ -15,7 +15,6 @@ class App {
     }
     
     setupEventListeners() {
-        // Кнопки главной страницы
         document.getElementById('inventory-btn')?.addEventListener('click', () => {
             if (!this.isDisabled('inventory-btn')) {
                 this.navigateTo('inventory');
@@ -32,7 +31,6 @@ class App {
             this.navigateTo('substitution');
         });
         
-        // Кнопка "Логи обновлений"
         document.getElementById('changelog-btn')?.addEventListener('click', () => {
             this.showChangelog();
         });
@@ -69,17 +67,14 @@ class App {
     }
     
     showHomePage() {
-        // Удаляем все страницы кроме главной
         const pages = document.querySelectorAll('.page:not(#home-page)');
         pages.forEach(page => page.remove());
         
-        // Показываем главную страницу
         const homePage = document.getElementById('home-page');
         if (homePage) {
             homePage.classList.add('active');
         }
         
-        // Сбрасываем состояние
         this.currentPage = 'home';
         this.updateBugReportLink();
     }
@@ -92,7 +87,6 @@ class App {
         }
     }
     
-    // === МОНИТОРИНГ ОБНОВЛЕНИЙ ===
     startUpdateMonitoring() {
         const config = window.RkMConfig?.github;
         if (!config) {
@@ -102,34 +96,13 @@ class App {
         
         console.log('🔄 Запуск мониторинга обновлений');
         
-        // Проверяем обновления каждые 5 минут
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 300000);
+        }, 120000); // 2 минуты
         
-        // Первоначальная проверка через 30 секунд после загрузки
         setTimeout(() => {
             this.checkForUpdates();
-        }, 30000);
-    }===
-    startUpdateMonitoring() {
-        const config = window.RkMConfig?.github;
-        if (!config) {
-            console.log('📋 Конфигурация GitHub не найдена');
-            return;
-        }
-        
-        console.log('🔄 Запуск мониторинга обновлений');
-        
-        // Проверяем обновления каждые 2 минуты (чтобы избежать rate limiting)
-        this.updateCheckInterval = setInterval(() => {
-            this.checkForUpdates();
-        }, 120000);
-        
-        // Первоначальная проверка через 10 секунд после загрузки
-        setTimeout(() => {
-            this.checkForUpdates();
-        }, 10000);
+        }, 10000); // первая проверка через 10 секунд
     }
     
     async checkForUpdates() {
@@ -201,7 +174,6 @@ class App {
     handleNewUpdate(commit) {
         this.isUpdating = true;
         
-        // Полностью останавливаем мониторинг после обнаружения обновления
         if (this.updateCheckInterval) {
             clearInterval(this.updateCheckInterval);
             this.updateCheckInterval = null;
@@ -209,9 +181,7 @@ class App {
         
         console.log('🚀 Запуск процедуры обновления');
         
-        // Показываем уведомление с 5-секундным таймером
         this.showUpdateWarning(() => {
-            // После 5 секунд показываем страницу обновления
             this.showUpdatePage(commit);
         });
     }
@@ -219,19 +189,16 @@ class App {
     showUpdateWarning(callback) {
         let countdown = 5;
         
-        // Показываем уведомление
         const notificationId = window.notifications?.show(
             this.createCountdownHTML(countdown),
             'warning',
-            0 // Не исчезает автоматически
+            0
         );
         
-        // Звуковое предупреждение
         if (window.soundSystem) {
             window.soundSystem.playWarning();
         }
         
-        // Обновляем таймер каждую секунду
         const timer = setInterval(() => {
             countdown--;
             
@@ -246,12 +213,10 @@ class App {
             if (countdown <= 0) {
                 clearInterval(timer);
                 
-                // Скрываем уведомление
                 if (notificationId) {
                     window.notifications?.hide(notificationId);
                 }
                 
-                // Выполняем callback
                 callback();
             }
         }, 1000);
@@ -269,18 +234,13 @@ class App {
     }
     
     showUpdatePage(commit) {
-        // Сохраняем новый коммит
         localStorage.setItem('rkm_last_commit', commit.sha);
         
         document.body.innerHTML = `
-            <!-- Кнопки интерфейса -->
             <button onclick="window.open('https://github.com/AmKilopa/RkM/issues/new?title=HPR', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
             <button onclick="window.changelogModule?.show()" class="changelog-btn">📋 Логи обновлений</button>
             
-            <!-- Контейнер для уведомлений -->
             <div id="notifications-container" class="notifications-container"></div>
-            
-            <!-- Модальные окна -->
             <div id="modal-overlay" class="modal-overlay"></div>
             
             <div class="status-page update-page">
@@ -311,17 +271,14 @@ class App {
             </div>
         `;
         
-        // Переинициализируем модули
         this.reinitializeModules();
         
-        // СРАЗУ запускаем зацикленную мелодию при появлении страницы
         let melodyIntervalId = null;
         if (window.soundSystem) {
             console.log('🎵 Запускаем мелодию сразу при появлении страницы обновления');
             melodyIntervalId = window.soundSystem.startLoopingUpdateMelody();
         }
         
-        // Запускаем 30-секундный таймер
         this.startSimpleCountdown(30, melodyIntervalId);
     }
     
@@ -338,7 +295,6 @@ class App {
             if (remaining <= 0) {
                 clearInterval(timer);
                 
-                // Останавливаем мелодию перед перезагрузкой
                 if (melodyIntervalId && window.soundSystem) {
                     window.soundSystem.stopLoopingMelody(melodyIntervalId);
                 }
@@ -349,7 +305,6 @@ class App {
         }, 1000);
     }
     
-    // === ПРОВЕРКА BACKEND ===
     async checkBackendStatus() {
         try {
             const connected = await window.api.testConnection();
@@ -361,20 +316,15 @@ class App {
         }
     }
     
-    // === OFFLINE СТРАНИЦА ===
     showOfflinePage() {
         const config = window.RkMConfig?.github;
         const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
         
         document.body.innerHTML = `
-            <!-- Кнопки интерфейса -->
             <button onclick="window.open('${config ? config.getIssueUrl('home') : '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
             <button onclick="window.changelogModule?.show()" class="changelog-btn">📋 Логи обновлений</button>
             
-            <!-- Контейнер для уведомлений -->
             <div id="notifications-container" class="notifications-container"></div>
-            
-            <!-- Модальные окна -->
             <div id="modal-overlay" class="modal-overlay"></div>
             
             <div class="status-page offline-page">
@@ -405,10 +355,8 @@ class App {
             </div>
         `;
         
-        // Переинициализируем модули
         this.reinitializeModules();
         
-        // Автоматическая проверка каждые 10 секунд
         setInterval(async () => {
             const connected = await window.api.testConnection();
             if (connected) {
@@ -417,29 +365,7 @@ class App {
         }, 10000);
     }
     
-    // === ТЕСТИРОВАНИЕ СИСТЕМЫ ОБНОВЛЕНИЯ ===
-    testUpdatePage() {
-        console.log('🧪 Тестирование страницы обновления');
-        
-        // Создаем фальшивый коммит для тестирования
-        const fakeCommit = {
-            sha: 'test1234567890abcdef',
-            commit: {
-                message: 'Тестовое обновление для проверки мелодии',
-                author: {
-                    name: 'Test User',
-                    date: new Date().toISOString()
-                }
-            }
-        };
-        
-        // Показываем уведомление как при реальном обновлении
-        this.showUpdateWarning(() => {
-            this.showUpdatePage(fakeCommit);
-        });
-    }
     reinitializeModules() {
-        // Переинициализируем системы после смены DOM
         if (window.notifications) {
             window.notifications.updateContainer();
         }
@@ -452,7 +378,6 @@ class App {
     }
 }
 
-// Запуск приложения
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
     console.log('🚀 RkM приложение запущено');
