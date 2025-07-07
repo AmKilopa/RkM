@@ -182,10 +182,10 @@ class SoundSystem {
         return this.enabled;
     }
     
-    // === ТЕСТОВЫЕ ЗВУКИ ===
+    // === ТЕСТОВЫЕ ЗВУКИ (только для внутреннего использования) ===
     testSounds() {
         if (!this.shouldPlay()) {
-            alert('Сначала взаимодействуйте со страницей (нажмите любую кнопку)');
+            console.log('🔊 Звуки недоступны или отключены');
             return;
         }
         
@@ -214,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="sound-panel">
             <label>Громкость:</label>
             <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="${window.soundSystem.getVolume()}">
-            <button id="test-sounds" class="test-btn">Тест</button>
         </div>
     `;
     
@@ -223,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обработчики событий
     const toggleBtn = document.getElementById('sound-toggle');
     const volumeSlider = document.getElementById('volume-slider');
-    const testBtn = document.getElementById('test-sounds');
     
     // Обновляем иконку кнопки
     const updateToggleIcon = () => {
@@ -250,11 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
     volumeSlider.addEventListener('input', (e) => {
         window.soundSystem.setVolume(parseFloat(e.target.value));
         updateToggleIcon();
-    });
-    
-    // Тест звуков
-    testBtn.addEventListener('click', () => {
-        window.soundSystem.testSounds();
     });
     
     // Начальное состояние
