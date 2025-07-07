@@ -114,9 +114,17 @@ class ApiClient {
     // === ТЕСТОВЫЙ МЕТОД ===
     async testConnection() {
         try {
-            const response = await fetch(this.baseUrl.replace('/api', '/health'));
-            console.log('🏥 Health check:', response.status);
-            return response.ok;
+            // Проверяем корневой URL вместо /health
+            const response = await fetch('https://rkm-9vui.onrender.com');
+            console.log('🏥 Backend проверка:', response.status, response.statusText);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Backend ответ:', data);
+                return data.status === 'running';
+            }
+            
+            return false;
         } catch (error) {
             console.log('❌ Backend недоступен:', error.message);
             return false;

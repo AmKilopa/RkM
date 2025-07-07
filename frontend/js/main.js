@@ -123,17 +123,17 @@ class App {
             console.log('⚠️ Проблемы с localStorage, используем временное хранение');
         }
         
-        // Проверяем обновления каждые 5 минут через backend
+        // Проверяем обновления каждые 30 секунд (для быстрой реакции на webhook)
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 300000); // 5 минут
+        }, 30000); // 30 секунд
         
-        // Первая проверка через 10 секунд
+        // Первая проверка через 5 секунд
         setTimeout(() => {
             this.checkForUpdates();
-        }, 10000);
+        }, 5000);
         
-        console.log('⏰ Мониторинг настроен: проверка через backend каждые 5 минут, первая через 10 секунд');
+        console.log('⏰ Мониторинг настроен: проверка через backend каждые 30 секунд, первая через 5 секунд');
     }
     
     async checkForUpdates() {
@@ -145,27 +145,34 @@ class App {
         console.log('🔍 Проверяем обновления через backend...');
         
         try {
-            // Проверяем обновления через backend вместо прямого обращения к GitHub
+            // Проверяем обновления через backend
             const result = await window.api.checkForUpdates();
             
             console.log('📊 Ответ backend:', result);
             
-            if (result.success && result.hasUpdate) {
+            if (result && result.success && result.hasUpdate) {
                 console.log('🆕 BACKEND СООБЩАЕТ О НОВОМ ОБНОВЛЕНИИ!');
                 console.log('📝 Новый коммит:', result.latestCommit);
                 
                 this.handleNewUpdate(result.latestCommit);
                 return;
-            } else if (result.success) {
+            } else if (result && result.success) {
                 console.log('✅ Новых обновлений нет');
             } else {
-                console.log('⚠️ Backend не смог проверить обновления:', result.error);
+                console.log('⚠️ Backend не смог проверить обновления:', result?.error || 'unknown error');
             }
             
         } catch (error) {
             console.log('❌ Ошибка проверки обновлений через backend:', error.message);
             
-            // При ошибке backend увеличиваем интервал проверки
+            // Если API эндпоинт не найден (404), используем fallback на GitHub
+            if (error.message.includes('404')) {
+                console.log('🔄 API эндпоинт не найден, переходим на проверку GitHub напрямую');
+                await this.checkForUpdatesGitHub();
+                return;
+            }
+            
+            // При других ошибках backend увеличиваем интервал проверки
             if (this.updateCheckInterval) {
                 clearInterval(this.updateCheckInterval);
             }
@@ -174,6 +181,86 @@ class App {
             this.updateCheckInterval = setInterval(() => {
                 this.checkForUpdates();
             }, 900000); // 15 минут при ошибках
+        }
+    }
+    
+    // Fallback проверка через GitHub (если API не реализован)
+    async checkForUpdatesGitHub() {
+        console.log('🔍 Fallback: проверяем GitHub напрямую...');
+        
+        const config = window.RkMConfig?.github;
+        if (!config) {
+            console.log('❌ Конфигурация GitHub не найдена');
+            return;
+        }
+        
+        try {
+            const timestamp = Date.now();
+            const randomParam = Math.random().toString(36).substring(7);
+            const url = `${config.apiUrl}/commits?per_page=1&_t=${timestamp}&_r=${randomParam}`;
+            
+            console.log('📡 Fallback запрос к GitHub API:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                },
+                cache: 'no-store'
+            });
+            
+            console.log(`📊 GitHub API ответ: ${response.status} ${response.statusText}`);
+            
+            if (response.status === 403) {
+                console.log('⚠️ GitHub rate limit, останавливаем fallback проверки');
+                return;
+            }
+            
+            if (response.status === 404) {
+                console.log('❌ GitHub репозиторий не найден');
+                return;
+            }
+            
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+            
+            const commits = await response.json();
+            
+            if (commits && commits[0]) {
+                const latestCommit = commits[0];
+                console.log('📌 Последний коммит (GitHub):', latestCommit.sha.substring(0, 7));
+                
+                let storedCommit = null;
+                try {
+                    storedCommit = localStorage.getItem('rkm_last_commit');
+                } catch (e) {
+                    storedCommit = sessionStorage.getItem('rkm_last_commit');
+                }
+                
+                console.log('💾 Сохраненный коммит:', storedCommit ? storedCommit.substring(0, 7) : 'none');
+                
+                if (storedCommit && storedCommit !== latestCommit.sha) {
+                    console.log('🆕 НАЙДЕН НОВЫЙ КОММИТ! (через GitHub fallback)');
+                    this.handleNewUpdate(latestCommit);
+                    return;
+                } else if (!storedCommit) {
+                    try {
+                        localStorage.setItem('rkm_last_commit', latestCommit.sha);
+                    } catch (e) {
+                        sessionStorage.setItem('rkm_last_commit', latestCommit.sha);
+                    }
+                    console.log('📋 Первый запуск - сохранен коммит (GitHub)');
+                } else {
+                    console.log('✅ Новых коммитов нет (GitHub)');
+                }
+            }
+            
+        } catch (error) {
+            console.log('❌ Ошибка fallback проверки GitHub:', error.message);
         }
     }
     
