@@ -419,6 +419,39 @@
     box-shadow: 0 8px 30px rgba(0, 123, 255, 0.4);
 }
 
+/* === ИНФОРМАЦИОННЫЕ БЛОКИ === */
+.commit-info {
+    background: var(--gradient-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    margin: 2rem 0;
+    border: 1px solid var(--border-color);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 var(--shadow-light);
+    position: relative;
+    backdrop-filter: blur(20px);
+}
+
+.commit-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow));
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.commit-info h3 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    text-align: center;
+    font-weight: 500;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
     .notifications-container {

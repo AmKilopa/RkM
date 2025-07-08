@@ -113,23 +113,16 @@ body {
     gap: 1rem;
 }
 
-.main-title::before {
-    content: '⚡';
-    position: static;
+.lightning-icon {
     font-size: 4rem;
     background: linear-gradient(45deg, #007bff, #28a745);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     filter: drop-shadow(0 0 20px rgba(0, 123, 255, 0.5));
-    animation: none;
-    transform: none;
-    width: auto;
-    height: auto;
-    z-index: auto;
 }
 
-.main-title::after {
+.main-title::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -156,7 +149,7 @@ body {
 .buttons-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* Уменьшено с 1.5rem */
+    gap: 1rem;
     width: 100%;
     max-width: 500px;
 }
@@ -166,13 +159,13 @@ body {
     background: var(--gradient-primary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 1.5rem 2rem; /* Уменьшено с 2rem 2.5rem */
+    padding: 1.5rem 2rem;
     font-size: 1.2rem;
     cursor: pointer;
     border-radius: var(--border-radius-lg);
     transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    min-height: 70px; /* Уменьшено с 90px */
+    min-height: 70px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -266,10 +259,12 @@ body {
     transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
     letter-spacing: 0.3px;
-    position: relative;
     overflow: hidden;
 }
 
+/* ИСПРАВЛЕННЫЕ ПОЗИЦИИ КНОПОК */
+
+/* Кнопка "Нашёл баг" - СПРАВА ВВЕРХУ */
 .bug-report-btn {
     top: 25px;
     right: 25px;
@@ -283,33 +278,7 @@ body {
     box-shadow: 0 8px 30px rgba(220, 53, 69, 0.4);
 }
 
-.back-btn {
-    top: 25px;
-    left: 25px;
-    background: linear-gradient(145deg, #6c757d, #5a6268);
-    box-shadow: 0 4px 20px rgba(108, 117, 125, 0.3);
-}
-
-.back-btn:hover {
-    background: linear-gradient(145deg, #5a6268, #495057);
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 30px rgba(108, 117, 125, 0.4);
-}
-
-.changelog-btn {
-    bottom: 25px;
-    right: 25px;
-    background: linear-gradient(145deg, var(--accent-green), #1e7e34);
-    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
-    border-radius: 50px;
-}
-
-.changelog-btn:hover {
-    background: linear-gradient(145deg, #1e7e34, #155724);
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.4);
-}
-
+/* Кнопка "Настройки" - ПО ЦЕНТРУ ВВЕРХУ */
 .settings-btn {
     top: 25px;
     left: 50%;
@@ -337,6 +306,35 @@ body {
     background: linear-gradient(145deg, #5a359a, #4c2a85);
     transform: translateX(-50%) translateY(-2px) scale(1.05);
     box-shadow: 0 8px 30px rgba(111, 66, 193, 0.4);
+}
+
+/* Кнопка "Логи обновлений" - СПРАВА ВНИЗУ */
+.changelog-btn {
+    bottom: 25px;
+    right: 25px;
+    background: linear-gradient(145deg, var(--accent-green), #1e7e34);
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+    border-radius: 50px;
+}
+
+.changelog-btn:hover {
+    background: linear-gradient(145deg, #1e7e34, #155724);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.4);
+}
+
+/* Кнопка "Назад" - СЛЕВА ВВЕРХУ (если понадобится) */
+.back-btn {
+    top: 25px;
+    left: 25px;
+    background: linear-gradient(145deg, #6c757d, #5a6268);
+    box-shadow: 0 4px 20px rgba(108, 117, 125, 0.3);
+}
+
+.back-btn:hover {
+    background: linear-gradient(145deg, #5a6268, #495057);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(108, 117, 125, 0.4);
 }
 
 /* === ФОРМЫ === */
@@ -490,218 +488,6 @@ body {
     box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
 }
 
-/* === СТАТУС СТРАНИЦЫ === */
-.status-page {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: 2rem;
-    background: radial-gradient(circle at center, rgba(0, 123, 255, 0.1), var(--bg-primary));
-}
-
-.status-icon {
-    font-size: 5rem;
-    margin-bottom: 2rem;
-    display: block;
-    filter: drop-shadow(0 0 20px currentColor);
-    text-align: center;
-}
-
-.status-icon.rotating {
-    animation: rotate 2s linear infinite, glow 2s ease-in-out infinite alternate;
-}
-
-.status-icon.pulsing {
-    animation: pulse 2s ease-in-out infinite, glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes glow {
-    0% { filter: drop-shadow(0 0 10px currentColor); }
-    100% { filter: drop-shadow(0 0 30px currentColor); }
-}
-
-.update-message, .offline-message {
-    text-align: center;
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    margin-bottom: 2rem;
-}
-
-/* === ИНФОРМАЦИОННЫЕ БЛОКИ === */
-.commit-info {
-    background: var(--gradient-primary);
-    border-radius: var(--border-radius-lg);
-    padding: 2rem;
-    margin: 2rem 0;
-    border: 1px solid var(--border-color);
-    box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 var(--shadow-light);
-    position: relative;
-    backdrop-filter: blur(20px);
-}
-
-.commit-info::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow));
-    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
-}
-
-.commit-info h3 {
-    color: var(--text-primary);
-    margin-bottom: 1.5rem;
-    font-size: 1.3rem;
-    text-align: center;
-    font-weight: 500;
-}
-
-.commit-message {
-    color: var(--accent-blue);
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
-    font-family: 'Courier New', monospace;
-    word-wrap: break-word;
-    text-align: center;
-    padding: 1.5rem;
-    background: rgba(0, 123, 255, 0.1);
-    border-radius: var(--border-radius-md);
-    border-left: 4px solid var(--accent-blue);
-    line-height: 1.5;
-}
-
-.commit-details {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    flex-wrap: wrap;
-}
-
-.commit-author {
-    color: var(--accent-green);
-    font-weight: 600;
-}
-
-.commit-date {
-    color: var(--text-muted);
-}
-
-.commit-sha {
-    color: var(--accent-yellow);
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-    background: rgba(255, 193, 7, 0.15);
-    padding: 8px 16px;
-    border-radius: var(--border-radius-md);
-    text-align: center;
-    font-weight: bold;
-    margin-top: 1rem;
-}
-
-/* === ЗАГРУЗКА === */
-.loading-section {
-    margin: 2rem 0;
-    text-align: center;
-}
-
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid var(--border-color);
-    border-top: 4px solid var(--accent-blue);
-    border-radius: 50%;
-    animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
-    margin: 0 auto 1.5rem;
-    filter: drop-shadow(0 0 10px var(--accent-blue));
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-
-/* === ИНДИКАТОРЫ === */
-.auto-refresh {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-}
-
-#countdown {
-    color: var(--accent-yellow);
-    font-weight: bold;
-    font-size: 1.3rem;
-    text-shadow: 0 0 10px currentColor;
-}
-
-.status-indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-    margin-top: 2rem;
-    color: var(--text-muted);
-    font-size: 1rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--border-radius-lg);
-}
-
-.pulse-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-    box-shadow: 0 0 10px currentColor;
-}
-
-.pulse-dot.offline {
-    background: var(--accent-red);
-    color: var(--accent-red);
-}
-
-.pulse-dot.online {
-    background: var(--accent-green);
-    color: var(--accent-green);
-}
-
-.pulse-dot.waiting {
-    background: var(--accent-yellow);
-    color: var(--accent-yellow);
-}
-
 /* === АНИМАЦИИ === */
 @keyframes fadeInUp {
     from {
@@ -748,17 +534,21 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
-/* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+/* === АДАПТИВНЫЕ СТИЛИ === */
 @media (max-width: 768px) {
     .main-title {
         font-size: 3.5rem;
         margin-bottom: 3rem;
     }
     
+    .lightning-icon {
+        font-size: 3rem;
+    }
+    
     .main-btn {
-        padding: 1.2rem 1.5rem; /* Уменьшено */
+        padding: 1.2rem 1.5rem;
         font-size: 1rem;
-        min-height: 60px; /* Уменьшено */
+        min-height: 60px;
         touch-action: manipulation;
     }
     
@@ -781,23 +571,14 @@ input:focus-visible {
     }
     
     .settings-btn {
-        left: 15px;
+        left: 50%;
+        transform: translateX(-50%);
     }
     
     .changelog-btn {
         bottom: 15px;
         right: 15px;
         padding: 10px 16px;
-    }
-    
-    .commit-details {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-    
-    .status-icon {
-        font-size: 4rem;
     }
 }
 
@@ -807,14 +588,18 @@ input:focus-visible {
         margin-bottom: 2rem;
     }
     
+    .lightning-icon {
+        font-size: 2.5rem;
+    }
+    
     .main-btn {
-        padding: 1rem 1.2rem; /* Еще более компактно */
+        padding: 1rem 1.2rem;
         font-size: 0.95rem;
-        min-height: 55px; /* Еще меньше */
+        min-height: 55px;
     }
     
     .buttons-container {
-        gap: 0.8rem; /* Меньший промежуток */
+        gap: 0.8rem;
     }
     
     .form-container {
@@ -827,29 +612,6 @@ input:focus-visible {
         padding: 14px 18px;
         font-size: 1rem;
     }
-    
-    .commit-info {
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-    }
-    
-    .auto-refresh {
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 1rem;
-    }
-    
-    .status-container {
-        padding: 1.5rem;
-    }
-    
-    .status-icon {
-        font-size: 2.5rem;
-    }
-    
-    .status-container h1 {
-        font-size: 1.8rem;
-    }
 }
 
 @media (max-width: 320px) {
@@ -859,6 +621,10 @@ input:focus-visible {
     
     .main-title {
         font-size: 2.2rem;
+    }
+    
+    .lightning-icon {
+        font-size: 2rem;
     }
     
     .main-btn {
@@ -895,11 +661,37 @@ input:focus-visible {
     padding: 2rem;
 }
 
-.performance-mode .status-page {
-    backdrop-filter: none;
+/* === КОНТЕЙНЕР ДЛЯ УВЕДОМЛЕНИЙ === */
+.notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    pointer-events: none;
 }
 
-.performance-mode .form-container {
-    backdrop-filter: none;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+/* === МОДАЛЬНОЕ ОКНО === */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    backdrop-filter: blur(20px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
 }
