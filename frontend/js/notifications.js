@@ -10,6 +10,8 @@ class NotificationSystem {
         
         this.updateContainer();
         this.setupGlobalStyles();
+        
+        console.log('✅ Система уведомлений инициализирована');
     }
     
     updateContainer() {
@@ -27,7 +29,7 @@ class NotificationSystem {
     }
     
     setupGlobalStyles() {
-        // Добавляем стили для highlight эффекта
+        // Добавляем стили для анимаций и эффектов
         if (!document.getElementById('notification-styles')) {
             const style = document.createElement('style');
             style.id = 'notification-styles';
@@ -36,10 +38,12 @@ class NotificationSystem {
                     from {
                         transform: translateX(120%);
                         opacity: 0;
+                        scale: 0.8;
                     }
                     to {
                         transform: translateX(0);
                         opacity: 1;
+                        scale: 1;
                     }
                 }
                 
@@ -61,17 +65,26 @@ class NotificationSystem {
                 }
                 
                 @keyframes notificationPulse {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.02); }
-                    100% { transform: scale(1); }
+                    0% { transform: scale(1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+                    50% { transform: scale(1.02); box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6); }
+                    100% { transform: scale(1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+                }
+                
+                @keyframes notificationGlow {
+                    0%, 100% { filter: brightness(1) saturate(1); }
+                    50% { filter: brightness(1.1) saturate(1.2); }
                 }
                 
                 .notification-highlight {
-                    animation: notificationPulse 0.6s ease-in-out 2;
+                    animation: notificationPulse 0.6s ease-in-out 2, notificationGlow 0.6s ease-in-out 2;
                 }
                 
                 .notification-shake {
                     animation: notificationShake 0.6s ease-in-out;
+                }
+                
+                .notification-entrance {
+                    animation: notificationSlideIn ${this.animationDuration}ms cubic-bezier(0.4, 0, 0.2, 1);
                 }
             `;
             document.head.appendChild(style);
@@ -162,26 +175,39 @@ class NotificationSystem {
         // Hover эффекты
         notification.addEventListener('mouseenter', () => {
             notification.style.transform = 'translateX(-5px) scale(1.02)';
-            notification.style.boxShadow = '0 25px 70px rgba(0, 0, 0, 0.6)';
+            notification.style.boxShadow = '0 25px 70px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1)';
+            
+            // Легкий звук при hover
+            if (window.soundSystem) {
+                setTimeout(() => {
+                    window.soundSystem.playSound('interface', 'interface', 0.2);
+                }, 50);
+            }
         });
         
         notification.addEventListener('mouseleave', () => {
             notification.style.transform = 'translateX(0) scale(1)';
-            notification.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5)';
+            notification.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
         });
         
         // Двойной клик для выделения
         notification.addEventListener('dblclick', () => {
             this.highlightNotification(id);
         });
+        
+        // Правый клик для дополнительных действий
+        notification.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showNotificationContextMenu(id, e.clientX, e.clientY);
+        });
     }
     
     animateIn(notification) {
-        notification.style.animation = `notificationSlideIn ${this.animationDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+        notification.classList.add('notification-entrance');
         
-        // Удаляем анимацию после завершения
+        // Удаляем класс анимации после завершения
         setTimeout(() => {
-            notification.style.animation = '';
+            notification.classList.remove('notification-entrance');
         }, this.animationDuration);
     }
     
@@ -309,6 +335,15 @@ class NotificationSystem {
                 const progressBar = document.getElementById(`progress-bar-${id}`);
                 if (progressBar) {
                     progressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+                    
+                    // Изменяем цвет в зависимости от прогресса
+                    if (percent < 30) {
+                        progressBar.style.background = 'var(--accent-red)';
+                    } else if (percent < 70) {
+                        progressBar.style.background = 'var(--accent-yellow)';
+                    } else {
+                        progressBar.style.background = 'var(--accent-green)';
+                    }
                 }
             },
             complete: () => {
@@ -357,6 +392,10 @@ class NotificationSystem {
         const notification = notificationData.element;
         notification.classList.add('notification-highlight');
         
+        if (window.soundSystem) {
+            window.soundSystem.playInterface();
+        }
+        
         setTimeout(() => {
             notification.classList.remove('notification-highlight');
         }, 1200);
@@ -369,9 +408,49 @@ class NotificationSystem {
         const notification = notificationData.element;
         notification.classList.add('notification-shake');
         
+        if (window.soundSystem) {
+            window.soundSystem.playError();
+        }
+        
         setTimeout(() => {
             notification.classList.remove('notification-shake');
         }, 600);
+    }
+    
+    // Контекстное меню для уведомления
+    showNotificationContextMenu(id, x, y) {
+        const existingMenu = document.querySelector('.notification-context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+        
+        const menu = document.createElement('div');
+        menu.className = 'notification-context-menu';
+        menu.style.position = 'fixed';
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+        menu.style.zIndex = '10000';
+        menu.innerHTML = `
+            <div class="context-menu-item" onclick="window.notifications.highlightNotification('${id}'); this.parentElement.remove();">
+                ✨ Выделить
+            </div>
+            <div class="context-menu-item" onclick="window.notifications.shakeNotification('${id}'); this.parentElement.remove();">
+                📳 Встряхнуть
+            </div>
+            <div class="context-menu-item" onclick="window.notifications.hide('${id}'); this.parentElement.remove();">
+                🗑️ Закрыть
+            </div>
+        `;
+        
+        document.body.appendChild(menu);
+        
+        // Закрытие меню при клике вне его
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu() {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            });
+        }, 10);
     }
     
     // === УТИЛИТЫ ===
@@ -432,6 +511,30 @@ class NotificationSystem {
     setMaxNotifications(max) {
         this.maxNotifications = Math.max(1, max);
     }
+    
+    // Статистика уведомлений
+    getStats() {
+        const stats = {
+            total: this.notifications.size,
+            byType: {},
+            oldest: null,
+            newest: null
+        };
+        
+        this.notifications.forEach((data) => {
+            stats.byType[data.type] = (stats.byType[data.type] || 0) + 1;
+            
+            if (!stats.oldest || data.timestamp < stats.oldest) {
+                stats.oldest = data.timestamp;
+            }
+            
+            if (!stats.newest || data.timestamp > stats.newest) {
+                stats.newest = data.timestamp;
+            }
+        });
+        
+        return stats;
+    }
 }
 
 // === ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ===
@@ -453,20 +556,22 @@ const additionalStyles = `
     }
     
     .notification-action-btn {
-        background: var(--accent-blue);
+        background: linear-gradient(145deg, var(--accent-blue), #0056b3);
         border: none;
         color: white;
         padding: 6px 12px;
-        border-radius: 6px;
+        border-radius: var(--border-radius-md);
         cursor: pointer;
         font-size: 0.85rem;
         font-weight: 600;
-        transition: all 0.2s ease;
+        transition: all var(--transition-normal);
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
     }
     
     .notification-action-btn:hover {
-        background: #0056b3;
+        background: linear-gradient(145deg, #0056b3, #004085);
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
     }
     
     .notification-with-progress {
@@ -476,16 +581,18 @@ const additionalStyles = `
     .notification-progress-custom {
         margin-top: 1rem;
         background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
+        border-radius: var(--border-radius-sm);
         height: 6px;
         overflow: hidden;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
     }
     
     .notification-progress-bar {
         height: 100%;
-        background: var(--accent-blue);
-        transition: width 0.3s ease;
-        border-radius: 4px;
+        background: linear-gradient(90deg, var(--accent-blue), #0056b3);
+        transition: width 0.3s ease, background 0.3s ease;
+        border-radius: var(--border-radius-sm);
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
     }
     
     .notification-confirm {
@@ -502,31 +609,57 @@ const additionalStyles = `
     .notification-btn {
         border: none;
         padding: 8px 16px;
-        border-radius: 6px;
+        border-radius: var(--border-radius-md);
         cursor: pointer;
         font-size: 0.85rem;
         font-weight: 600;
-        transition: all 0.2s ease;
+        transition: all var(--transition-normal);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
     
     .notification-btn-confirm {
-        background: var(--accent-green);
+        background: linear-gradient(145deg, var(--accent-green), #1e7e34);
         color: white;
     }
     
     .notification-btn-confirm:hover {
-        background: #1e7e34;
+        background: linear-gradient(145deg, #1e7e34, #155724);
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
     }
     
     .notification-btn-cancel {
-        background: var(--accent-red);
+        background: linear-gradient(145deg, var(--accent-red), #c82333);
         color: white;
     }
     
     .notification-btn-cancel:hover {
-        background: #c82333;
+        background: linear-gradient(145deg, #c82333, #a71e2a);
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+    
+    .notification-context-menu {
+        background: var(--gradient-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        padding: 0.5rem 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(20px);
+        min-width: 150px;
+    }
+    
+    .context-menu-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        color: var(--text-primary);
+        transition: all var(--transition-normal);
+        font-size: 0.9rem;
+    }
+    
+    .context-menu-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--accent-blue);
     }
 `;
 
