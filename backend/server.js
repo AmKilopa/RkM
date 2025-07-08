@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch');
+const https = require('https');
 const path = require('path');
 
 const app = express();
@@ -42,6 +42,48 @@ const GITHUB_CONFIG = {
 let lastKnownCommit = null;
 let lastUpdateCheck = null;
 
+// Функция для HTTP запросов через встроенный https модуль
+function makeHttpsRequest(url, options = {}) {
+    return new Promise((resolve, reject) => {
+        const req = https.get(url, {
+            headers: {
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'RkM-Backend/1.0.0',
+                ...options.headers
+            }
+        }, (res) => {
+            let data = '';
+            
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            
+            res.on('end', () => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    resolve({
+                        ok: res.statusCode >= 200 && res.statusCode < 300,
+                        status: res.statusCode,
+                        statusText: res.statusMessage,
+                        data: jsonData
+                    });
+                } catch (error) {
+                    reject(new Error(`JSON parse error: ${error.message}`));
+                }
+            });
+        });
+        
+        req.on('error', (error) => {
+            reject(new Error(`Request error: ${error.message}`));
+        });
+        
+        req.setTimeout(10000, () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+        });
+    });
+}
+
 // === ОСНОВНЫЕ API ЭНДПОИНТЫ ===
 
 // Проверка статуса сервера
@@ -62,18 +104,13 @@ app.get('/api/updates/check', async (req, res) => {
     
     try {
         // Получаем последние коммиты из GitHub
-        const response = await fetch(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`, {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'RkM-Backend/1.0.0'
-            }
-        });
+        const response = await makeHttpsRequest(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`);
         
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
         }
         
-        const commits = await response.json();
+        const commits = response.data;
         const latestCommit = commits[0];
         
         lastUpdateCheck = new Date().toISOString();
@@ -133,18 +170,13 @@ app.post('/api/updates/force', async (req, res) => {
         lastKnownCommit = null;
         
         // Делаем обычную проверку
-        const response = await fetch(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`, {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'RkM-Backend/1.0.0'
-            }
-        });
+        const response = await makeHttpsRequest(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`);
         
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.status}`);
         }
         
-        const commits = await response.json();
+        const commits = response.data;
         const latestCommit = commits[0];
         
         lastKnownCommit = latestCommit;
@@ -212,18 +244,13 @@ app.get('/api/repo/info', async (req, res) => {
     console.log('📊 Запрос информации о репозитории');
     
     try {
-        const response = await fetch(GITHUB_CONFIG.apiUrl, {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'RkM-Backend/1.0.0'
-            }
-        });
+        const response = await makeHttpsRequest(GITHUB_CONFIG.apiUrl);
         
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.status}`);
         }
         
-        const repoInfo = await response.json();
+        const repoInfo = response.data;
         
         res.json({
             success: true,
@@ -306,15 +333,10 @@ app.listen(PORT, () => {
     setTimeout(async () => {
         console.log('📋 Первоначальная загрузка коммитов...');
         try {
-            const response = await fetch(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`, {
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'RkM-Backend/1.0.0'
-                }
-            });
+            const response = await makeHttpsRequest(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`);
             
             if (response.ok) {
-                const commits = await response.json();
+                const commits = response.data;
                 if (commits[0]) {
                     lastKnownCommit = commits[0];
                     console.log('✅ Загружен начальный коммит:', lastKnownCommit.sha.substring(0, 7));

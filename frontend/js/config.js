@@ -128,11 +128,18 @@ class ApiClient {
         return this.request('/updates/latest-commit', { method: 'GET' });
     }
     
-    // === ТЕСТОВЫЙ МЕТОД ===
+    // === ТЕСТОВЫЙ МЕТОД - ИСПРАВЛЕНО! ===
     async testConnection() {
         try {
-            // Проверяем корневой URL
-            const response = await fetch('https://rkm-9vui.onrender.com');
+            // ИСПРАВЛЕНО: проверяем API эндпоинт /status вместо корневого URL
+            const response = await fetch(`${this.baseUrl}/status`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                timeout: 5000
+            });
+            
             console.log('🏥 Backend проверка:', response.status, response.statusText);
             
             if (response.ok) {
@@ -142,6 +149,7 @@ class ApiClient {
             }
             
             return false;
+            
         } catch (error) {
             console.log('❌ Backend недоступен:', error.message);
             return false;
