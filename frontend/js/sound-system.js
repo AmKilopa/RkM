@@ -5,6 +5,7 @@ class SoundSystem {
         this.masterVolume = 0.6;
         this.soundEnabled = true;
         this.sounds = new Map();
+        this.isInitialized = false;
         this.categorySettings = {
             button: true,
             notification: true,
@@ -21,32 +22,40 @@ class SoundSystem {
             professional: this.getProfessionalSounds()
         };
         
-        this.init();
+        this.setupEventListeners();
     }
     
     async init() {
+        if (this.isInitialized) return;
+        
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Проверяем состояние AudioContext
+            if (this.audioContext.state === 'suspended') {
+                await this.audioContext.resume();
+            }
+            
             await this.loadSounds();
-            this.setupEventListeners();
+            this.isInitialized = true;
             
             document.dispatchEvent(new CustomEvent('soundSystemReady'));
         } catch (error) {
-            // Игнорируем ошибки
+            // Ждем пользовательского взаимодействия
         }
     }
     
     setupEventListeners() {
-        const unlockAudio = () => {
-            if (this.audioContext && this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
+        const initSound = async () => {
+            if (!this.isInitialized) {
+                await this.init();
             }
-            document.removeEventListener('click', unlockAudio);
-            document.removeEventListener('touchstart', unlockAudio);
         };
         
-        document.addEventListener('click', unlockAudio);
-        document.addEventListener('touchstart', unlockAudio);
+        // Инициализируем звук при первом взаимодействии
+        document.addEventListener('click', initSound, { once: true });
+        document.addEventListener('keydown', initSound, { once: true });
+        document.addEventListener('touchstart', initSound, { once: true });
     }
     
     async loadSounds() {
@@ -120,8 +129,13 @@ class SoundSystem {
         return buffer;
     }
     
-    playSound(soundName, category = 'interface', volume = 1.0) {
-        if (!this.soundEnabled || !this.categorySettings[category] || !this.audioContext) {
+    async playSound(soundName, category = 'interface', volume = 1.0) {
+        // Инициализируем при первом воспроизведении
+        if (!this.isInitialized) {
+            await this.init();
+        }
+        
+        if (!this.soundEnabled || !this.categorySettings[category] || !this.audioContext || !this.isInitialized) {
             return;
         }
         
@@ -141,7 +155,7 @@ class SoundSystem {
             gainNode.gain.value = this.masterVolume * volume;
             source.start(0);
         } catch (error) {
-            // Игнорируем ошибки
+            // Игнорируем ошибки воспроизведения
         }
     }
     
@@ -377,7 +391,9 @@ class SoundSystem {
     async setSoundPack(packName) {
         if (this.soundPacks[packName]) {
             this.currentSoundPack = packName;
-            await this.loadSounds();
+            if (this.isInitialized) {
+                await this.loadSounds();
+            }
         }
     }
     
@@ -402,6 +418,7 @@ class SoundSystem {
             this.audioContext.close();
         }
         this.sounds.clear();
+        this.isInitialized = false;
     }
 }
 
