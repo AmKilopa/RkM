@@ -4,9 +4,381 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RkM - Главная</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/settings-styles.css">
+    <style>
+        /* === ОСНОВНЫЕ СТИЛИ === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #ccc;
+            --text-muted: #888;
+            --accent-blue: #007bff;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --accent-yellow: #ffc107;
+            --border-color: #333;
+            --shadow-light: rgba(255, 255, 255, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.5);
+            --gradient-primary: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
+            --gradient-glow: linear-gradient(145deg, #007bff, #0056b3);
+            --border-radius-sm: 8px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 16px;
+            --border-radius-xl: 20px;
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.4s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            scroll-behavior: smooth;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .page.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* === ГЛАВНАЯ СТРАНИЦА === */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .main-title {
+            font-size: 5rem;
+            font-weight: 100;
+            margin-bottom: 4rem;
+            color: var(--text-primary);
+            text-align: center;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            background: linear-gradient(45deg, #fff, #007bff, #28a745);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientFlow 8s ease-in-out infinite;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .main-title .lightning-icon {
+            font-size: 4rem;
+            background: linear-gradient(45deg, #007bff, #28a745);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(0, 123, 255, 0.5));
+        }
+
+        .main-title::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(0, 123, 255, 0.1), transparent);
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* === КНОПКИ === */
+        .main-btn {
+            background: var(--gradient-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 1.5rem 2rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: var(--border-radius-lg);
+            transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .main-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .main-btn:hover:not(.disabled)::before {
+            left: 100%;
+        }
+
+        .main-btn:hover:not(.disabled) {
+            background: linear-gradient(145deg, var(--bg-tertiary), #3a3a3a);
+            border-color: #555;
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 15px 50px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(0, 123, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .main-btn:active:not(.disabled) {
+            transform: translateY(-2px) scale(1.01);
+            transition: all 0.1s ease;
+        }
+
+        .main-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            filter: grayscale(1);
+        }
+
+        .main-btn .status {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        /* === НАВИГАЦИОННЫЕ КНОПКИ === */
+        .bug-report-btn, .back-btn, .changelog-btn, .settings-btn {
+            position: fixed;
+            z-index: 1000;
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--border-radius-lg);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bug-report-btn {
+            top: 25px;
+            right: 25px;
+            background: linear-gradient(145deg, var(--accent-red), #c82333);
+            box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .bug-report-btn:hover {
+            background: linear-gradient(145deg, #c82333, #a71e2a);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(220, 53, 69, 0.4);
+        }
+
+        .settings-btn {
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, #6f42c1, #5a359a);
+            box-shadow: 0 4px 20px rgba(111, 66, 193, 0.3);
+        }
+
+        .settings-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .settings-btn:hover::before {
+            left: 100%;
+        }
+
+        .settings-btn:hover {
+            background: linear-gradient(145deg, #5a359a, #4c2a85);
+            transform: translateX(-50%) translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(111, 66, 193, 0.4);
+        }
+
+        .changelog-btn {
+            bottom: 25px;
+            right: 25px;
+            background: linear-gradient(145deg, var(--accent-green), #1e7e34);
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+            border-radius: 50px;
+        }
+
+        .changelog-btn:hover {
+            background: linear-gradient(145deg, #1e7e34, #155724);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(40, 167, 69, 0.4);
+        }
+
+        /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 3.5rem;
+                margin-bottom: 3rem;
+            }
+            
+            .main-title .lightning-icon {
+                font-size: 3rem;
+            }
+            
+            .main-btn {
+                padding: 1.2rem 1.5rem;
+                font-size: 1rem;
+                min-height: 60px;
+            }
+            
+            .bug-report-btn,
+            .settings-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                top: 15px;
+            }
+            
+            .bug-report-btn {
+                right: 15px;
+            }
+            
+            .settings-btn {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .changelog-btn {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 2.8rem;
+                margin-bottom: 2rem;
+            }
+            
+            .main-title .lightning-icon {
+                font-size: 2.5rem;
+            }
+            
+            .main-btn {
+                padding: 1rem 1.2rem;
+                font-size: 0.95rem;
+                min-height: 55px;
+            }
+            
+            .buttons-container {
+                gap: 0.8rem;
+            }
+        }
+
+        /* === КОНТЕЙНЕР ДЛЯ УВЕДОМЛЕНИЙ === */
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+            pointer-events: none;
+        }
+
+        /* === МОДАЛЬНОЕ ОКНО === */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
     <!-- Кнопка "Нашёл баг" -->
@@ -27,7 +399,10 @@
     <!-- Главная страница -->
     <div id="home-page" class="page active">
         <div class="main-container">
-            <h1 class="main-title">RkM</h1>
+            <h1 class="main-title">
+                <span class="lightning-icon">⚡</span>
+                RkM
+            </h1>
             <div class="buttons-container">
                 <button id="inventory-btn" class="main-btn disabled">
                     💼 Узнать стоимость инвентаря
@@ -44,15 +419,31 @@
         </div>
     </div>
     
-    <!-- Подключение скриптов в правильном порядке -->
-    <script src="js/config.js"></script>
-    <script src="js/sound-system.js"></script>
-    <script src="js/sound-settings.js"></script>
-    <script src="js/settings.js"></script>
-    <script src="js/button-sounds.js"></script>
-    <script src="js/notifications.js"></script>
-    <script src="js/modules/changelog.js"></script>
-    <script src="js/modules/substitution.js"></script>
-    <script src="js/main.js"></script>
+    <script>
+        // Базовая функциональность для демонстрации
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка клика по кнопкам
+            document.querySelectorAll('.main-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!this.classList.contains('disabled')) {
+                        console.log('Кнопка нажата:', this.textContent.split('\n')[0].trim());
+                    }
+                });
+            });
+
+            // Обработка навигационных кнопок
+            document.getElementById('bug-report-btn').addEventListener('click', function() {
+                console.log('Открыть форму сообщения об ошибке');
+            });
+
+            document.getElementById('settings-btn').addEventListener('click', function() {
+                console.log('Открыть настройки');
+            });
+
+            document.getElementById('changelog-btn').addEventListener('click', function() {
+                console.log('Открыть логи обновлений');
+            });
+        });
+    </script>
 </body>
 </html>

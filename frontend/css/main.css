@@ -107,9 +107,29 @@ body {
     background-clip: text;
     animation: gradientFlow 8s ease-in-out infinite;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
 }
 
 .main-title::before {
+    content: '⚡';
+    position: static;
+    font-size: 4rem;
+    background: linear-gradient(45deg, #007bff, #28a745);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(0, 123, 255, 0.5));
+    animation: none;
+    transform: none;
+    width: auto;
+    height: auto;
+    z-index: auto;
+}
+
+.main-title::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -292,7 +312,8 @@ body {
 
 .settings-btn {
     top: 25px;
-    left: 25px;
+    left: 50%;
+    transform: translateX(-50%);
     background: linear-gradient(145deg, #6f42c1, #5a359a);
     box-shadow: 0 4px 20px rgba(111, 66, 193, 0.3);
 }
@@ -314,7 +335,7 @@ body {
 
 .settings-btn:hover {
     background: linear-gradient(145deg, #5a359a, #4c2a85);
-    transform: translateY(-2px) scale(1.05);
+    transform: translateX(-50%) translateY(-2px) scale(1.05);
     box-shadow: 0 8px 30px rgba(111, 66, 193, 0.4);
 }
 
