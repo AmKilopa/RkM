@@ -6,8 +6,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS настройки
-app.use(cors({
+// Расширенные CORS настройки
+const corsOptions = {
     origin: [
         'https://rkmhelper.vercel.app',
         'https://rkm-9vui.onrender.com',
@@ -17,17 +17,62 @@ app.use(cors({
         'http://localhost:5000'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'X-Requested-With', 
+        'Accept',
+        'Origin',
+        'Cache-Control',
+        'Pragma'
+    ],
+    exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+    maxAge: 86400, // 24 часа для preflight кэша
+    optionsSuccessStatus: 200 // Для старых браузеров
+};
+
+// Применяем CORS
+app.use(cors(corsOptions));
+
+// Дополнительная обработка preflight запросов
+app.options('*', (req, res) => {
+    console.log('🔍 Preflight запрос:', req.method, req.path, 'Origin:', req.get('Origin'));
+    
+    // Устанавливаем CORS заголовки вручную
+    const origin = req.get('Origin');
+    if (corsOptions.origin.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin,Cache-Control,Pragma');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    
+    res.status(200).end();
+});
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Логирование всех запросов
+// Расширенное логирование всех запросов
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin') || 'none'}`);
+    const timestamp = new Date().toISOString();
+    const origin = req.get('Origin') || 'none';
+    const userAgent = req.get('User-Agent') || 'unknown';
+    
+    console.log(`${timestamp} - ${req.method} ${req.path}`);
+    console.log(`  Origin: ${origin}`);
+    console.log(`  User-Agent: ${userAgent.substring(0, 50)}...`);
+    
+    // Устанавливаем CORS заголовки для всех ответов
+    if (corsOptions.origin.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Credentials', 'true');
+    }
+    
     next();
 });
 
@@ -43,20 +88,29 @@ let updateState = {
 
 // Проверка статуса сервера
 app.get('/api/status', (req, res) => {
-  //  console.log('📊 Запрос статуса сервера');
-    res.json({
+    console.log('📊 Запрос статуса сервера от:', req.get('Origin'));
+    
+    const responseData = {
         status: 'running',
         timestamp: new Date().toISOString(),
         version: '1.0.0',
         hasNewUpdate: updateState.hasNewUpdate,
         lastCommit: updateState.latestCommit?.sha?.substring(0, 7) || null,
-        lastWebhook: updateState.lastWebhookTime
-    });
+        lastWebhook: updateState.lastWebhookTime,
+        cors: {
+            origin: req.get('Origin'),
+            allowed: corsOptions.origin.includes(req.get('Origin'))
+        }
+    };
+    
+    console.log('📊 Ответ статуса:', responseData.status, 'CORS:', responseData.cors.allowed);
+    
+    res.json(responseData);
 });
 
 // Проверка обновлений (БЕЗ запросов к GitHub!)
 app.get('/api/updates/check', (req, res) => {
- //   console.log('🔍 Проверка обновлений (через webhook состояние)');
+    console.log('🔍 Проверка обновлений от:', req.get('Origin'));
     
     try {
         // Возвращаем состояние основанное на webhook данных
@@ -71,18 +125,18 @@ app.get('/api/updates/check', (req, res) => {
         
         // Если есть обновление и оно не было уведомлено
         if (updateState.hasNewUpdate && !updateState.updateNotified) {
-        //    console.log('🆕 Отправляем уведомление об обновлении');
+            console.log('🆕 Отправляем уведомление об обновлении');
             updateState.updateNotified = true; // Помечаем как уведомленное
             
             // Через 30 секунд сбрасываем флаг (после того как фронтенд обработает)
             setTimeout(() => {
-           //     console.log('🔄 Сброс флага обновления');
+                console.log('🔄 Сброс флага обновления');
                 updateState.hasNewUpdate = false;
                 updateState.updateNotified = false;
             }, 30000);
         }
         
-        console.log('Состояние обновлений:', {
+        console.log('🔍 Состояние обновлений:', {
             hasUpdate: result.hasUpdate,
             commit: result.latestCommit?.sha?.substring(0, 7) || 'none',
             webhookTime: result.webhookTime
@@ -91,7 +145,7 @@ app.get('/api/updates/check', (req, res) => {
         res.json(result);
         
     } catch (error) {
-       // console.log('❌ Ошибка при проверке состояния:', error.message);
+        console.log('❌ Ошибка при проверке состояния:', error.message);
         
         res.json({
             success: false,
@@ -155,7 +209,7 @@ app.post('/webhook/github', (req, res) => {
 
 // Принудительная проверка - сбрасывает состояние
 app.post('/api/updates/force', (req, res) => {
-    console.log('🔄 Принудительный сброс состояния обновлений');
+    console.log('🔄 Принудительный сброс состояния обновлений от:', req.get('Origin'));
     
     updateState.hasNewUpdate = false;
     updateState.updateNotified = false;
@@ -169,7 +223,7 @@ app.post('/api/updates/force', (req, res) => {
 
 // Получение текущего состояния обновлений (для отладки)
 app.get('/api/updates/state', (req, res) => {
-    console.log('🔍 Запрос текущего состояния обновлений');
+    console.log('🔍 Запрос текущего состояния обновлений от:', req.get('Origin'));
     
     res.json({
         success: true,
@@ -178,15 +232,48 @@ app.get('/api/updates/state', (req, res) => {
     });
 });
 
-// Тестовый эндпоинт
+// Тестовый эндпоинт для проверки CORS
 app.get('/api/test', (req, res) => {
-    console.log('🧪 Тестовый запрос');
-    res.json({
+    console.log('🧪 Тестовый запрос от:', req.get('Origin'));
+    
+    const responseData = {
         message: 'Backend работает!',
         timestamp: new Date().toISOString(),
         origin: req.get('Origin'),
         userAgent: req.get('User-Agent'),
-        updateState: updateState
+        updateState: updateState,
+        cors: {
+            allowed: corsOptions.origin.includes(req.get('Origin')),
+            headers: {
+                'Access-Control-Allow-Origin': res.get('Access-Control-Allow-Origin'),
+                'Access-Control-Allow-Credentials': res.get('Access-Control-Allow-Credentials')
+            }
+        }
+    };
+    
+    console.log('🧪 CORS проверка:', responseData.cors);
+    
+    res.json(responseData);
+});
+
+// Новый эндпоинт для диагностики CORS
+app.get('/api/cors-test', (req, res) => {
+    console.log('🔧 CORS диагностика от:', req.get('Origin'));
+    
+    const origin = req.get('Origin');
+    const isAllowed = corsOptions.origin.includes(origin);
+    
+    console.log('🔧 Origin разрешен:', isAllowed);
+    console.log('🔧 Разрешенные origins:', corsOptions.origin);
+    
+    res.json({
+        success: true,
+        origin: origin,
+        allowed: isAllowed,
+        allowedOrigins: corsOptions.origin,
+        headers: req.headers,
+        method: req.method,
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -194,7 +281,7 @@ app.get('/api/test', (req, res) => {
 
 // 404 для API
 app.use('/api/*', (req, res) => {
-    console.log('❌ API эндпоинт не найден:', req.path);
+    console.log('❌ API эндпоинт не найден:', req.path, 'от:', req.get('Origin'));
     res.status(404).json({
         success: false,
         error: 'API endpoint not found',
@@ -216,7 +303,7 @@ app.use((error, req, res, next) => {
 // === ЗАПУСК СЕРВЕРА ===
 
 app.listen(PORT, () => {
-    console.log('🚀 RkM Backend запущен (Webhook режим)');
+    console.log('🚀 RkM Backend запущен (Webhook режим + улучшенный CORS)');
     console.log(`🔗 Сервер: http://localhost:${PORT}`);
     console.log(`📡 API: http://localhost:${PORT}/api`);
     console.log('📊 Эндпоинты:');
@@ -224,17 +311,18 @@ app.listen(PORT, () => {
     console.log('  GET  /api/updates/check - проверка обновлений (webhook)');
     console.log('  POST /api/updates/force - сброс состояния');
     console.log('  GET  /api/updates/state - текущее состояние');
-    console.log('  POST /webhook/github - GitHub webhook');
     console.log('  GET  /api/test - тестовый эндпоинт');
+    console.log('  GET  /api/cors-test - диагностика CORS');
+    console.log('  POST /webhook/github - GitHub webhook');
     console.log('');
     console.log('🎣 WEBHOOK готов к приему:');
     console.log(`   URL: http://localhost:${PORT}/webhook/github`);
     console.log(`   Production: https://rkm-9vui.onrender.com/webhook/github`);
     console.log('');
     console.log('🔧 CORS разрешен для:');
-    console.log('  - https://rkmhelper.netlify.app');
-    console.log('  - https://rkm-9vui.onrender.com');
-    console.log('  - localhost (различные порты)');
+    corsOptions.origin.forEach(origin => {
+        console.log(`  - ${origin}`);
+    });
     console.log('');
     console.log('⚡ БЕЗ запросов к GitHub API - только webhook!');
 });
