@@ -9,15 +9,44 @@ global.hasUpdate = false;
 global.latestCommit = null;
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Увеличиваем лимит для webhook payload
+app.use(express.urlencoded({ extended: true }));
+
+// CORS с подробными настройками
 app.use(cors({
-    origin: '*', // В продакшене лучше указать конкретные домены
+    origin: ['*'], // Разрешаем все источники для webhook
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-GitHub-Event', 'X-GitHub-Delivery', 'X-Hub-Signature-256'],
     credentials: true
 }));
 
-// Логирование всех запросов
+// Дополнительные заголовки для GitHub webhook
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, X-GitHub-Event, X-GitHub-Delivery');
+    
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
+
+// Логирование всех запросов с деталями
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`\n=== ${timestamp} ===`);
+    console.log(`${req.method} ${req.url}`);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    
+    if (req.method === 'POST' && req.body) {
+        console.log('Body size:', JSON.stringify(req.body).length, 'characters');
+        if (req.url.includes('webhook')) {
+            console.log('Body keys:', Object.keys(req.body));
+        }
+    }
+    
     next();
 });
 
@@ -229,7 +258,73 @@ app.get('/api/updates/latest-commit', async (req, res) => {
     }
 });
 
-// ===== СТАТУС ОБНОВЛЕНИЙ (для дебага) =====
+// ===== ТЕСТ WEBHOOK ВРУЧНУЮ =====
+app.post('/api/test-webhook', (req, res) => {
+    console.log('\n🧪🧪🧪 MANUAL WEBHOOK TEST 🧪🧪🧪');
+    console.log('📅 Timestamp:', new Date().toISOString());
+    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📦 Body:', JSON.stringify(req.body, null, 2));
+    
+    // Симулируем webhook
+    global.hasUpdate = true;
+    global.latestCommit = {
+        sha: 'manual-test-' + Date.now(),
+        message: 'Manual webhook test commit',
+        author: {
+            name: 'Manual Test',
+            date: new Date().toISOString()
+        },
+        url: 'https://github.com/AmKilopa/RkM'
+    };
+    
+    console.log('✅ Manual flag set for testing');
+    
+    res.json({
+        success: true,
+        message: 'Manual webhook test completed',
+        hasUpdate: global.hasUpdate,
+        latestCommit: global.latestCommit
+    });
+    
+    console.log('🧪🧪🧪 MANUAL TEST COMPLETE 🧪🧪🧪\n');
+});
+
+// ===== ПРОВЕРКА ДОСТУПНОСТИ WEBHOOK ENDPOINT =====
+app.get('/api/webhooks/github', (req, res) => {
+    console.log('🔍 GET request to webhook endpoint');
+    res.json({
+        message: 'GitHub webhook endpoint is accessible',
+        method: 'This endpoint expects POST requests from GitHub',
+        url: req.url,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ===== ЛЮБОЙ POST НА WEBHOOK ENDPOINT (для диагностики) =====
+app.all('/api/webhooks/*', (req, res) => {
+    console.log('\n🔍🔍🔍 WEBHOOK ENDPOINT ACCESS 🔍🔍🔍');
+    console.log('📅 Timestamp:', new Date().toISOString());
+    console.log('📋 Method:', req.method);
+    console.log('🔗 URL:', req.url);
+    console.log('🌐 IP:', req.ip);
+    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('📦 Body size:', JSON.stringify(req.body || {}).length);
+    
+    if (req.method === 'POST' && req.url === '/api/webhooks/github') {
+        // Перенаправляем на основной обработчик
+        console.log('🔄 Redirecting to main webhook handler');
+    } else {
+        console.log('ℹ️ Non-standard webhook access');
+        res.json({
+            received: true,
+            method: req.method,
+            url: req.url,
+            note: 'Webhook endpoint accessed but not standard GitHub POST'
+        });
+    }
+    
+    console.log('🔍🔍🔍 WEBHOOK ACCESS LOG COMPLETE 🔍🔍🔍\n');
+});
 app.get('/api/updates/status', (req, res) => {
     console.log('📊 Запрос статуса обновлений');
     res.json({
