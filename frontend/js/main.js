@@ -139,7 +139,7 @@ class App {
             const result = await window.api.checkForUpdates();
             
             if (result && result.success && result.hasUpdate) {
-                console.log('🆕 Получено обновление!');
+                console.log('Обновление!');
                 
                 // Сохраняем информацию о том что обновление обнаружено
                 try {
@@ -344,7 +344,7 @@ class App {
                     <div class="loading-section">
                         <div class="loading-spinner"></div>
                         <p class="loading-text"></p>
-                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Обновление получено через backend</p>
+                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Обновление получено</p>
                     </div>
                     
                     <div class="auto-refresh">
@@ -408,13 +408,13 @@ class App {
         try {
             const connected = await window.api.testConnection();
             if (!connected) {
-                console.log('❌ Backend недоступен');
+                console.log('Backend недоступен');
                 this.showOfflinePage();
             } else {
-                console.log('✅ Backend доступен');
+                console.log('Backend доступен');
             }
         } catch (error) {
-            console.log('❌ Backend недоступен');
+            console.log('Backend недоступен');
             this.showOfflinePage();
         }
     }
@@ -464,7 +464,7 @@ class App {
         setInterval(async () => {
             const connected = await window.api.testConnection();
             if (connected) {
-                console.log('✅ Backend восстановлен');
+                console.log('Backend восстановлен');
                 window.location.reload();
             }
         }, 10000);
