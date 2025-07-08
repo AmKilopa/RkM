@@ -133,7 +133,7 @@ class App {
         // Проверяем обновления каждые 30 секунд (для быстрой реакции на webhook)
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 30000); // 30 секунд
+        }, 120000); // 2 минуты
         
         // Первая проверка через 5 секунд
         setTimeout(() => {

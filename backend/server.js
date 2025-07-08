@@ -6,10 +6,10 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS настройки - ИСПРАВЛЕНО!
+// CORS настройки
 app.use(cors({
     origin: [
-        'https://rkmhelper.netlify.app',  // ← ГЛАВНЫЙ ДОМЕН ФРОНТЕНДА
+        'https://rkmhelper.netlify.app',
         'https://rkm-9vui.onrender.com',
         'http://localhost:3000',
         'http://localhost:8080',
@@ -31,58 +31,13 @@ app.use((req, res, next) => {
     next();
 });
 
-// GitHub API конфигурация
-const GITHUB_CONFIG = {
-    owner: 'AmKilopa',
-    repo: 'RkM',
-    apiUrl: 'https://api.github.com/repos/AmKilopa/RkM'
+// Хранение состояния обновлений
+let updateState = {
+    hasNewUpdate: false,           // Флаг нового обновления
+    latestCommit: null,           // Последний коммит от webhook
+    lastWebhookTime: null,        // Время последнего webhook
+    updateNotified: false         // Было ли уведомление отправлено
 };
-
-// Хранение последнего коммита в памяти
-let lastKnownCommit = null;
-let lastUpdateCheck = null;
-
-// Функция для HTTP запросов через встроенный https модуль
-function makeHttpsRequest(url, options = {}) {
-    return new Promise((resolve, reject) => {
-        const req = https.get(url, {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'RkM-Backend/1.0.0',
-                ...options.headers
-            }
-        }, (res) => {
-            let data = '';
-            
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-            
-            res.on('end', () => {
-                try {
-                    const jsonData = JSON.parse(data);
-                    resolve({
-                        ok: res.statusCode >= 200 && res.statusCode < 300,
-                        status: res.statusCode,
-                        statusText: res.statusMessage,
-                        data: jsonData
-                    });
-                } catch (error) {
-                    reject(new Error(`JSON parse error: ${error.message}`));
-                }
-            });
-        });
-        
-        req.on('error', (error) => {
-            reject(new Error(`Request error: ${error.message}`));
-        });
-        
-        req.setTimeout(10000, () => {
-            req.destroy();
-            reject(new Error('Request timeout'));
-        });
-    });
-}
 
 // === ОСНОВНЫЕ API ЭНДПОИНТЫ ===
 
@@ -93,65 +48,50 @@ app.get('/api/status', (req, res) => {
         status: 'running',
         timestamp: new Date().toISOString(),
         version: '1.0.0',
-        lastCommit: lastKnownCommit?.sha?.substring(0, 7) || null,
-        lastCheck: lastUpdateCheck
+        hasNewUpdate: updateState.hasNewUpdate,
+        lastCommit: updateState.latestCommit?.sha?.substring(0, 7) || null,
+        lastWebhook: updateState.lastWebhookTime
     });
 });
 
-// Проверка обновлений
-app.get('/api/updates/check', async (req, res) => {
-    console.log('🔍 Запрос проверки обновлений');
+// Проверка обновлений (БЕЗ запросов к GitHub!)
+app.get('/api/updates/check', (req, res) => {
+    console.log('🔍 Проверка обновлений (через webhook состояние)');
     
     try {
-        // Получаем последние коммиты из GitHub
-        const response = await makeHttpsRequest(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`);
-        
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-        }
-        
-        const commits = response.data;
-        const latestCommit = commits[0];
-        
-        lastUpdateCheck = new Date().toISOString();
-        
-        if (!latestCommit) {
-            console.log('⚠️ Не удалось получить коммиты из GitHub');
-            return res.json({
-                success: false,
-                error: 'No commits found'
-            });
-        }
-        
-        console.log('📌 Последний коммит:', latestCommit.sha.substring(0, 7), '-', latestCommit.commit.message);
-        
-        // Проверяем есть ли обновление
-        let hasUpdate = false;
-        
-        if (lastKnownCommit && lastKnownCommit.sha !== latestCommit.sha) {
-            hasUpdate = true;
-            console.log('🆕 НАЙДЕНО ОБНОВЛЕНИЕ!');
-            console.log('📝 Старый коммит:', lastKnownCommit.sha.substring(0, 7));
-            console.log('📝 Новый коммит:', latestCommit.sha.substring(0, 7));
-        } else if (!lastKnownCommit) {
-            console.log('📋 Первая проверка - сохраняем коммит');
-        } else {
-            console.log('✅ Новых обновлений нет');
-        }
-        
-        // Обновляем последний известный коммит
-        lastKnownCommit = latestCommit;
-        
-        res.json({
+        // Возвращаем состояние основанное на webhook данных
+        const result = {
             success: true,
-            hasUpdate: hasUpdate,
-            latestCommit: latestCommit,
-            source: 'github-api',
-            timestamp: lastUpdateCheck
+            hasUpdate: updateState.hasNewUpdate,
+            latestCommit: updateState.latestCommit,
+            source: 'webhook',
+            timestamp: new Date().toISOString(),
+            webhookTime: updateState.lastWebhookTime
+        };
+        
+        // Если есть обновление и оно не было уведомлено
+        if (updateState.hasNewUpdate && !updateState.updateNotified) {
+            console.log('🆕 Отправляем уведомление об обновлении');
+            updateState.updateNotified = true; // Помечаем как уведомленное
+            
+            // Через 30 секунд сбрасываем флаг (после того как фронтенд обработает)
+            setTimeout(() => {
+                console.log('🔄 Сброс флага обновления');
+                updateState.hasNewUpdate = false;
+                updateState.updateNotified = false;
+            }, 30000);
+        }
+        
+        console.log('📊 Состояние обновлений:', {
+            hasUpdate: result.hasUpdate,
+            commit: result.latestCommit?.sha?.substring(0, 7) || 'none',
+            webhookTime: result.webhookTime
         });
         
+        res.json(result);
+        
     } catch (error) {
-        console.log('❌ Ошибка при проверке обновлений:', error.message);
+        console.log('❌ Ошибка при проверке состояния:', error.message);
         
         res.json({
             success: false,
@@ -161,61 +101,34 @@ app.get('/api/updates/check', async (req, res) => {
     }
 });
 
-// Принудительная проверка обновлений
-app.post('/api/updates/force', async (req, res) => {
-    console.log('🚀 Принудительная проверка обновлений');
-    
-    try {
-        // Сбрасываем последний известный коммит
-        lastKnownCommit = null;
-        
-        // Делаем обычную проверку
-        const response = await makeHttpsRequest(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`);
-        
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
-        }
-        
-        const commits = response.data;
-        const latestCommit = commits[0];
-        
-        lastKnownCommit = latestCommit;
-        lastUpdateCheck = new Date().toISOString();
-        
-        console.log('✅ Принудительная проверка завершена, коммит:', latestCommit.sha.substring(0, 7));
-        
-        res.json({
-            success: true,
-            hasUpdate: true, // Всегда возвращаем true для принудительной проверки
-            latestCommit: latestCommit,
-            source: 'force-check',
-            timestamp: lastUpdateCheck
-        });
-        
-    } catch (error) {
-        console.log('❌ Ошибка принудительной проверки:', error.message);
-        
-        res.json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-// Webhook для GitHub (если настроен)
+// GitHub Webhook - ГЛАВНЫЙ ЭНДПОИНТ!
 app.post('/webhook/github', (req, res) => {
-    console.log('🎣 Получен GitHub webhook');
+    console.log('🎣 ========== ПОЛУЧЕН GITHUB WEBHOOK ==========');
     
     try {
         const payload = req.body;
         
+        // Логируем основную информацию
+        console.log('📝 Event:', req.headers['x-github-event']);
+        console.log('📝 Repository:', payload.repository?.full_name);
+        console.log('📝 Ref:', payload.ref);
+        
+        // Проверяем что это push в main ветку
         if (payload.ref === 'refs/heads/main' && payload.commits && payload.commits.length > 0) {
             const latestCommit = payload.commits[payload.commits.length - 1];
             
-            console.log('📝 Webhook коммит:', latestCommit.id.substring(0, 7), '-', latestCommit.message);
+            console.log('🚀 ========== НОВЫЙ PUSH В MAIN! ==========');
+            console.log('📝 Коммит ID:', latestCommit.id.substring(0, 7));
+            console.log('📝 Сообщение:', latestCommit.message);
+            console.log('📝 Автор:', latestCommit.author.name);
+            console.log('📝 Время:', latestCommit.timestamp);
+            console.log('===============================================');
             
-            // Обновляем последний коммит из webhook
-            lastKnownCommit = {
+            // Обновляем состояние
+            updateState.hasNewUpdate = true;
+            updateState.updateNotified = false;
+            updateState.lastWebhookTime = new Date().toISOString();
+            updateState.latestCommit = {
                 sha: latestCommit.id,
                 commit: {
                     message: latestCommit.message,
@@ -226,9 +139,10 @@ app.post('/webhook/github', (req, res) => {
                 }
             };
             
-            lastUpdateCheck = new Date().toISOString();
+            console.log('✅ Состояние обновлено - ожидаем запрос от фронтенда');
             
-            console.log('✅ Коммит обновлен через webhook');
+        } else {
+            console.log('ℹ️ Webhook не для main ветки или без коммитов');
         }
         
         res.status(200).send('OK');
@@ -239,41 +153,29 @@ app.post('/webhook/github', (req, res) => {
     }
 });
 
-// Получение информации о репозитории
-app.get('/api/repo/info', async (req, res) => {
-    console.log('📊 Запрос информации о репозитории');
+// Принудительная проверка - сбрасывает состояние
+app.post('/api/updates/force', (req, res) => {
+    console.log('🔄 Принудительный сброс состояния обновлений');
     
-    try {
-        const response = await makeHttpsRequest(GITHUB_CONFIG.apiUrl);
-        
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
-        }
-        
-        const repoInfo = response.data;
-        
-        res.json({
-            success: true,
-            repo: {
-                name: repoInfo.name,
-                fullName: repoInfo.full_name,
-                description: repoInfo.description,
-                stars: repoInfo.stargazers_count,
-                forks: repoInfo.forks_count,
-                language: repoInfo.language,
-                updatedAt: repoInfo.updated_at,
-                url: repoInfo.html_url
-            }
-        });
-        
-    } catch (error) {
-        console.log('❌ Ошибка получения информации о репозитории:', error.message);
-        
-        res.json({
-            success: false,
-            error: error.message
-        });
-    }
+    updateState.hasNewUpdate = false;
+    updateState.updateNotified = false;
+    
+    res.json({
+        success: true,
+        message: 'Update state reset',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Получение текущего состояния обновлений (для отладки)
+app.get('/api/updates/state', (req, res) => {
+    console.log('🔍 Запрос текущего состояния обновлений');
+    
+    res.json({
+        success: true,
+        state: updateState,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Тестовый эндпоинт
@@ -283,7 +185,8 @@ app.get('/api/test', (req, res) => {
         message: 'Backend работает!',
         timestamp: new Date().toISOString(),
         origin: req.get('Origin'),
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent'),
+        updateState: updateState
     });
 });
 
@@ -313,39 +216,27 @@ app.use((error, req, res, next) => {
 // === ЗАПУСК СЕРВЕРА ===
 
 app.listen(PORT, () => {
-    console.log('🚀 RkM Backend запущен');
+    console.log('🚀 RkM Backend запущен (Webhook режим)');
     console.log(`🔗 Сервер: http://localhost:${PORT}`);
     console.log(`📡 API: http://localhost:${PORT}/api`);
     console.log('📊 Эндпоинты:');
     console.log('  GET  /api/status - статус сервера');
-    console.log('  GET  /api/updates/check - проверка обновлений');
-    console.log('  POST /api/updates/force - принудительная проверка');
+    console.log('  GET  /api/updates/check - проверка обновлений (webhook)');
+    console.log('  POST /api/updates/force - сброс состояния');
+    console.log('  GET  /api/updates/state - текущее состояние');
     console.log('  POST /webhook/github - GitHub webhook');
-    console.log('  GET  /api/repo/info - информация о репозитории');
     console.log('  GET  /api/test - тестовый эндпоинт');
+    console.log('');
+    console.log('🎣 WEBHOOK готов к приему:');
+    console.log(`   URL: http://localhost:${PORT}/webhook/github`);
+    console.log(`   Production: https://rkm-9vui.onrender.com/webhook/github`);
     console.log('');
     console.log('🔧 CORS разрешен для:');
     console.log('  - https://rkmhelper.netlify.app');
     console.log('  - https://rkm-9vui.onrender.com');
     console.log('  - localhost (различные порты)');
-    
-    // Первоначальная проверка коммитов
-    setTimeout(async () => {
-        console.log('📋 Первоначальная загрузка коммитов...');
-        try {
-            const response = await makeHttpsRequest(`${GITHUB_CONFIG.apiUrl}/commits?per_page=1`);
-            
-            if (response.ok) {
-                const commits = response.data;
-                if (commits[0]) {
-                    lastKnownCommit = commits[0];
-                    console.log('✅ Загружен начальный коммит:', lastKnownCommit.sha.substring(0, 7));
-                }
-            }
-        } catch (error) {
-            console.log('⚠️ Не удалось загрузить начальный коммит:', error.message);
-        }
-    }, 2000);
+    console.log('');
+    console.log('⚡ БЕЗ запросов к GitHub API - только webhook!');
 });
 
 // Graceful shutdown
