@@ -30,6 +30,16 @@ class App {
                 setTimeout(() => {
                     if (window.notifications) {
                         window.notifications.success('✅ Сайт успешно обновлён!', 5000);
+                    } else {
+                        // Если система уведомлений не загружена, загружаем её
+                        const script = document.createElement('script');
+                        script.src = 'js/notifications.js';
+                        script.onload = () => {
+                            if (window.notifications) {
+                                window.notifications.success('✅ Сайт успешно обновлён!', 5000);
+                            }
+                        };
+                        document.head.appendChild(script);
                     }
                 }, 1000);
             }
@@ -317,6 +327,15 @@ class App {
             if (commits && commits[0]) {
                 const latestCommit = commits[0];
                 
+                // Отладочная информация
+                console.log('GitHub API коммит:', {
+                    sha: latestCommit.sha,
+                    commit_author_name: latestCommit.commit?.author?.name,
+                    author_login: latestCommit.author?.login,
+                    author_avatar: latestCommit.author?.avatar_url,
+                    message: latestCommit.commit?.message
+                });
+                
                 let storedCommit = null;
                 try {
                     storedCommit = localStorage.getItem('rkm_last_commit');
@@ -331,13 +350,15 @@ class App {
                         localStorage.setItem('rkm_update_detected', JSON.stringify({
                             timestamp: new Date().toISOString(),
                             commit: latestCommit.sha,
-                            message: latestCommit.commit.message
+                            message: latestCommit.commit.message,
+                            author: latestCommit.author?.login || latestCommit.commit.author.name
                         }));
                     } catch (e) {
                         sessionStorage.setItem('rkm_update_detected', JSON.stringify({
                             timestamp: new Date().toISOString(),
                             commit: latestCommit.sha,
-                            message: latestCommit.commit.message
+                            message: latestCommit.commit.message,
+                            author: latestCommit.author?.login || latestCommit.commit.author.name
                         }));
                     }
                     
@@ -365,6 +386,9 @@ class App {
             this.updateCheckInterval = null;
         }
         
+        // Отладочная информация о получаемом коммите
+        console.log('Обрабатываем обновление, тип коммита:', typeof commit, commit);
+        
         this.showUpdatePage(commit);
     }
     
@@ -376,10 +400,44 @@ class App {
             sessionStorage.setItem('rkm_last_commit', commitSha);
         }
         
+        // Правильное извлечение данных коммита
         const commitMessage = commit.commit?.message || commit.message || 'Обновление получено';
-        const authorName = commit.commit?.author?.name || commit.author?.name || 'Backend';
+        const authorName = commit.commit?.author?.name || commit.author?.username || commit.author?.login || 'Разработчик';
         const authorDate = commit.commit?.author?.date || commit.author?.date || new Date().toISOString();
+        
+        // Безопасное получение аватарки
+        let authorAvatar = 'https://github.com/identicons/app.png'; // Запасной вариант
+        if (commit.author?.avatar_url) {
+            authorAvatar = commit.author.avatar_url;
+        } else if (commit.committer?.avatar_url) {
+            authorAvatar = commit.committer.avatar_url;
+        }
+        
         const shortSha = commitSha.substring(0, 7);
+        
+        // Показываем уведомление об обновлении
+        setTimeout(() => {
+            if (window.notifications) {
+                window.notifications.warning('🔄 Найдено обновление! Сайт будет перезагружен через 5 секунд', 6000);
+            } else {
+                // Простое уведомление через alert если система уведомлений недоступна
+                console.log('🔔 Система уведомлений недоступна, используем консоль');
+                console.log('🔄 Найдено обновление! Сайт будет перезагружен через 5 секунд');
+            }
+        }, 500);
+        
+        // Отладочная информация
+        console.log('Данные коммита:', {
+            'Полный объект': commit,
+            'SHA': commitSha,
+            'Сообщение': commitMessage,
+            'Автор (итоговый)': authorName,
+            'Аватарка': authorAvatar,
+            'Дата': authorDate,
+            'commit.commit.author.name': commit.commit?.author?.name,
+            'commit.author.login': commit.author?.login,
+            'commit.author.username': commit.author?.username
+        });
         
         document.body.innerHTML = `
             <div id="notifications-container" class="notifications-container"></div>
@@ -410,7 +468,7 @@ class App {
                             <div class="commit-message">${commitMessage}</div>
                             
                             <div class="commit-author">
-                                <span class="author-icon">👤</span>
+                                <img src="${authorAvatar}" alt="${authorName}" class="author-avatar" onerror="this.src='https://github.com/identicons/app.png'">
                                 <span class="author-name">${authorName}</span>
                             </div>
                         </div>
@@ -425,7 +483,7 @@ class App {
                     
                     <div class="countdown-wrapper">
                         <span class="countdown-text">Автоматическая перезагрузка через</span>
-                        <span class="countdown-number" id="countdown">15</span>
+                        <span class="countdown-number" id="countdown">5</span>
                         <span class="countdown-unit">секунд</span>
                     </div>
                 </div>
@@ -617,13 +675,21 @@ class App {
                 .commit-author {
                     display: flex;
                     align-items: center;
-                    gap: 0.5rem;
+                    gap: 0.75rem;
                     color: #ccc;
                     font-size: 0.95rem;
                 }
                 
-                .author-icon {
-                    font-size: 1.1rem;
+                .author-avatar {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    border: 2px solid rgba(255, 255, 255, 0.2);
+                    object-fit: cover;
+                }
+                
+                .author-name {
+                    font-weight: 500;
                 }
                 
                 .progress-section {
@@ -643,7 +709,7 @@ class App {
                     height: 100%;
                     background: linear-gradient(90deg, #007bff, #28a745);
                     border-radius: 3px;
-                    animation: fillProgress 15s linear;
+                    animation: fillProgress 5s linear;
                 }
                 
                 @keyframes fillProgress {
@@ -709,11 +775,18 @@ class App {
                     .commit-header {
                         flex-direction: column;
                         align-items: flex-start;
+                        gap: 0.75rem;
                     }
                     
                     .countdown-wrapper {
                         font-size: 1rem;
                         text-align: center;
+                        gap: 0.3rem;
+                    }
+                    
+                    .author-avatar {
+                        width: 28px;
+                        height: 28px;
                     }
                 }
                 
@@ -729,12 +802,21 @@ class App {
                     .commit-message {
                         font-size: 1rem;
                     }
+                    
+                    .author-avatar {
+                        width: 28px;
+                        height: 28px;
+                    }
+                    
+                    .commit-author {
+                        gap: 0.5rem;
+                    }
                 }
             </style>
         `;
         
         this.reinitializeModules();
-        this.startSimpleCountdown(15);
+        this.startSimpleCountdown(5);
     }
     
     startSimpleCountdown(seconds) {
@@ -816,10 +898,27 @@ class App {
         const config = window.RkMConfig?.github;
         const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
         
-        const commitMessage = commit.commit.message;
-        const authorName = commit.commit.author.name;
-        const commitDate = new Date(commit.commit.author.date).toLocaleString('ru');
+        const commitMessage = commit.commit?.message || commit.message || 'Обновление получено';
+        const authorName = commit.commit?.author?.name || commit.author?.username || commit.author?.login || 'Разработчик';
+        const commitDate = new Date(commit.commit?.author?.date || commit.author?.date || new Date()).toLocaleString('ru');
+        
+        // Безопасное получение аватарки
+        let authorAvatar = 'https://github.com/identicons/app.png';
+        if (commit.author?.avatar_url) {
+            authorAvatar = commit.author.avatar_url;
+        } else if (commit.committer?.avatar_url) {
+            authorAvatar = commit.committer.avatar_url;
+        }
+        
         const shortSha = commit.sha.substring(0, 7);
+        
+        // Отладочная информация для backend updating
+        console.log('Backend updating данные:', {
+            commit: commit,
+            authorName: authorName,
+            authorAvatar: authorAvatar,
+            message: commitMessage
+        });
         
         document.body.innerHTML = `
             <div id="notifications-container" class="notifications-container"></div>
@@ -845,7 +944,10 @@ class App {
                             <div class="commit-badge">#${shortSha}</div>
                             <div class="commit-message">${commitMessage}</div>
                             <div class="commit-details">
-                                <span class="detail-item">👤 ${authorName}</span>
+                                <div class="detail-item">
+                                    <img src="${authorAvatar}" alt="${authorName}" class="author-avatar-small" onerror="this.src='https://github.com/identicons/app.png'">
+                                    <span>${authorName}</span>
+                                </div>
                                 <span class="detail-item">📅 ${commitDate}</span>
                             </div>
                         </div>
@@ -1087,6 +1189,17 @@ class App {
             .detail-item {
                 color: #ccc;
                 font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            
+            .author-avatar-small {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                object-fit: cover;
             }
             
             .error-content .error-description {
@@ -1231,7 +1344,18 @@ class App {
                 
                 .commit-details {
                     flex-direction: column;
-                    gap: 0.5rem;
+                    gap: 0.75rem;
+                    align-items: flex-start;
+                }
+                
+                .detail-item {
+                    width: 100%;
+                    justify-content: flex-start;
+                }
+                
+                .author-avatar-small {
+                    width: 18px;
+                    height: 18px;
                 }
             }
         `;
@@ -1255,9 +1379,19 @@ class App {
     
     reinitializeModules() {
         setTimeout(() => {
-            if (window.notifications) {
+            // Инициализируем систему уведомлений если её нет
+            if (!window.notifications) {
+                // Загружаем систему уведомлений
+                const script = document.createElement('script');
+                script.src = 'js/notifications.js';
+                script.onload = () => {
+                    console.log('🔔 Система уведомлений загружена');
+                };
+                document.head.appendChild(script);
+            } else {
                 window.notifications.updateContainer();
             }
+            
             if (window.modals) {
                 window.modals.setupEventListeners();
             }
