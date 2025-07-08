@@ -8,7 +8,6 @@ class App {
     }
     
     init() {
-        // Ждем инициализации API клиента
         if (!window.api) {
             setTimeout(() => this.init(), 100);
             return;
@@ -19,14 +18,10 @@ class App {
         this.updateBugReportLink();
         this.startUpdateMonitoring();
         this.checkBackendStatus();
-        
-        console.log('✅ Приложение RkM инициализировано');
     }
     
-    // Очистка кеша API для предотвращения проблем
     clearApiCache() {
         try {
-            // Очищаем sessionStorage от старых данных
             const keysToRemove = [];
             for (let i = 0; i < sessionStorage.length; i++) {
                 const key = sessionStorage.key(i);
@@ -41,7 +36,6 @@ class App {
     }
     
     setupEventListeners() {
-        // Основные кнопки
         document.getElementById('inventory-btn')?.addEventListener('click', () => {
             if (!this.isDisabled('inventory-btn')) {
                 this.navigateTo('inventory');
@@ -66,32 +60,22 @@ class App {
             this.showChangelog();
         });
         
-        // Обработка кнопки "Назад"
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('back-btn')) {
                 this.showHomePage();
             }
         });
         
-        // Клавиатурные сочетания
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.showHomePage();
             }
             
-            // Ctrl+R для обновления
             if (e.ctrlKey && e.key === 'r') {
                 e.preventDefault();
                 this.checkForUpdates();
             }
         });
-        
-        // Воспроизведение звуков при загрузке
-        if (window.soundSystem) {
-            setTimeout(() => {
-                window.soundSystem.playInterface();
-            }, 500);
-        }
     }
     
     isDisabled(buttonId) {
@@ -102,7 +86,6 @@ class App {
         this.currentPage = page;
         this.updateBugReportLink();
         
-        // Воспроизводим звук навигации
         if (window.soundSystem) {
             window.soundSystem.playInterface();
         }
@@ -129,28 +112,21 @@ class App {
                     this.loadModule('friend-error');
                 }
                 break;
-            default:
-                console.warn(`Неизвестная страница: ${page}`);
         }
     }
     
-    // Загрузка модулей по требованию
     async loadModule(moduleName) {
         try {
             const script = document.createElement('script');
             script.src = `js/modules/${moduleName}.js`;
             script.onload = () => {
-                console.log(`✅ Модуль ${moduleName} загружен`);
-                // Повторная попытка навигации после загрузки
                 this.navigateTo(moduleName);
             };
             script.onerror = () => {
-                console.error(`❌ Ошибка загрузки модуля ${moduleName}`);
                 window.notifications?.error(`Ошибка загрузки модуля ${moduleName}`);
             };
             document.head.appendChild(script);
         } catch (error) {
-            console.error(`Ошибка загрузки модуля ${moduleName}:`, error);
             window.notifications?.error(`Ошибка загрузки модуля ${moduleName}`);
         }
     }
@@ -191,7 +167,6 @@ class App {
     }
     
     showHomePage() {
-        // Удаляем все страницы кроме главной
         const pages = document.querySelectorAll('.page:not(#home-page)');
         pages.forEach(page => {
             page.style.opacity = '0';
@@ -199,7 +174,6 @@ class App {
             setTimeout(() => page.remove(), 300);
         });
         
-        // Показываем главную страницу
         const homePage = document.getElementById('home-page');
         if (homePage) {
             homePage.classList.add('active');
@@ -210,7 +184,6 @@ class App {
         this.currentPage = 'home';
         this.updateBugReportLink();
         
-        // Звук возврата на главную
         if (window.soundSystem) {
             window.soundSystem.playInterface();
         }
@@ -229,39 +202,30 @@ class App {
     }
     
     startUpdateMonitoring() {
-        try {
-            const oldCommit = localStorage.getItem('rkm_last_commit');
-        } catch (e) {
-            // Игнорируем ошибки localStorage
-        }
-        
-        // Проверка каждые 30 секунд для webhook обновлений
         const checkInterval = window.RkMConfig?.intervals?.updateCheck || 30000;
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
         }, checkInterval);
         
-        // Первая проверка через 2 секунды после загрузки
         setTimeout(() => {
             this.checkForUpdates();
         }, 2000);
-        
-        console.log(`🔄 Мониторинг обновлений запущен (интервал: ${checkInterval/1000}с)`);
     }
     
     async checkForUpdates() {
-        if (this.isUpdating) {
-            return;
-        }
+        if (this.isUpdating) return;
         
         try {
-            // Проверяем обновления через backend
             const result = await window.api.checkForUpdates();
             
             if (result && result.success && result.hasUpdate) {
-                console.log('🆕 Обновление обнаружено!');
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('ru-RU');
+                const timeStr = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+                const commitShort = result.latestCommit.substring(0, 7);
                 
-                // Сохраняем информацию о том что обновление обнаружено
+                console.log(`🆕 Обновление ${dateStr} / ${timeStr} \\ #${commitShort}`);
+                
                 try {
                     localStorage.setItem('rkm_update_detected', JSON.stringify({
                         timestamp: new Date().toISOString(),
@@ -276,32 +240,24 @@ class App {
             }
             
         } catch (error) {
-            // Если API эндпоинт не найден (404), используем fallback на GitHub
             if (error.message.includes('404')) {
                 await this.checkForUpdatesGitHub();
                 return;
             }
             
-            // При других ошибках backend увеличиваем интервал проверки
             if (this.updateCheckInterval) {
                 clearInterval(this.updateCheckInterval);
             }
             
-            // Увеличиваем интервал при ошибках
             this.updateCheckInterval = setInterval(() => {
                 this.checkForUpdates();
-            }, 900000); // 15 минут при ошибках
-            
-            console.warn('⚠️ Ошибка проверки обновлений через backend, переход на fallback режим');
+            }, 900000);
         }
     }
     
-    // Fallback проверка через GitHub (если API не реализован)
     async checkForUpdatesGitHub() {
         const config = window.RkMConfig?.github;
-        if (!config) {
-            return;
-        }
+        if (!config) return;
         
         try {
             const timestamp = Date.now();
@@ -319,18 +275,8 @@ class App {
                 cache: 'no-store'
             });
             
-            if (response.status === 403) {
-                console.warn('⚠️ GitHub API лимит превышен');
+            if (response.status === 403 || response.status === 404 || !response.ok) {
                 return;
-            }
-            
-            if (response.status === 404) {
-                console.warn('⚠️ GitHub репозиторий не найден');
-                return;
-            }
-            
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
             }
             
             const commits = await response.json();
@@ -346,7 +292,12 @@ class App {
                 }
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    console.log('🆕 Обновление получено через GitHub!');
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('ru-RU');
+                    const timeStr = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+                    const commitShort = latestCommit.sha.substring(0, 7);
+                    
+                    console.log(`🆕 Обновление ${dateStr} / ${timeStr} \\ #${commitShort}`);
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
@@ -359,77 +310,22 @@ class App {
             }
             
         } catch (error) {
-            console.warn('⚠️ Ошибка fallback проверки через GitHub:', error.message);
+            // Тихо игнорируем ошибки
         }
     }
     
     handleNewUpdate(commit) {
         this.isUpdating = true;
         
-        // Полностью останавливаем мониторинг
         if (this.updateCheckInterval) {
             clearInterval(this.updateCheckInterval);
             this.updateCheckInterval = null;
         }
         
-        this.showUpdateWarning(() => {
-            this.showUpdatePage(commit);
-        });
-    }
-    
-    showUpdateWarning(callback) {
-        let countdown = 5;
-        
-        const notificationId = window.notifications?.show(
-            this.createCountdownHTML(countdown),
-            'warning',
-            0 // Не исчезает автоматически
-        );
-        
-        // Звуковое предупреждение
-        if (window.soundSystem) {
-            window.soundSystem.playWarning();
-        }
-        
-        // Обновляем таймер каждую секунду
-        const timer = setInterval(() => {
-            countdown--;
-            
-            const notification = document.getElementById(notificationId);
-            if (notification) {
-                const textEl = notification.querySelector('.notification-text');
-                if (textEl) {
-                    textEl.innerHTML = this.createCountdownHTML(countdown);
-                }
-            }
-            
-            if (countdown <= 0) {
-                clearInterval(timer);
-                
-                // Скрываем уведомление
-                if (notificationId) {
-                    window.notifications?.hide(notificationId);
-                }
-                
-                // Выполняем callback
-                callback();
-            }
-        }, 1000);
-    }
-    
-    createCountdownHTML(seconds) {
-        return `
-            <div style="text-align: center; font-size: 1.1rem;">
-                <div style="font-weight: bold; margin-bottom: 8px;">🔄 Обновление сайта</div>
-                <div style="color: #ccc; margin-bottom: 8px;">Сайт будет перезапущен через:</div>
-                <div style="font-size: 2rem; color: #ffc107; font-weight: bold; margin: 8px 0;">${seconds}</div>
-                <div style="color: #888; font-size: 0.9rem;">Подготовьтесь к перезагрузке страницы</div>
-            </div>
-        `;
+        this.showUpdatePage(commit);
     }
     
     showUpdatePage(commit) {
-        // Сохраняем новый коммит
         const commitSha = commit.sha || commit.id || 'unknown';
         try {
             localStorage.setItem('rkm_last_commit', commitSha);
@@ -437,16 +333,12 @@ class App {
             sessionStorage.setItem('rkm_last_commit', commitSha);
         }
         
-        // Обработка данных коммита от backend
-        const commitMessage = commit.commit?.message || commit.message || 'Обновление получено от backend';
+        const commitMessage = commit.commit?.message || commit.message || 'Обновление получено';
         const authorName = commit.commit?.author?.name || commit.author?.name || 'Backend';
         const authorDate = commit.commit?.author?.date || commit.author?.date || new Date().toISOString();
         const shortSha = commitSha.substring(0, 7);
         
         document.body.innerHTML = `
-            <button onclick="window.open('${window.RkMConfig?.github?.getIssueUrl('home') || '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
-            <button onclick="window.changelogModule?.show()" class="changelog-btn">📋 Логи обновлений</button>
-            
             <div id="notifications-container" class="notifications-container"></div>
             <div id="modal-overlay" class="modal-overlay"></div>
             
@@ -469,46 +361,20 @@ class App {
                     <div class="loading-section">
                         <div class="loading-spinner"></div>
                         <p class="loading-text">Подготовка к перезагрузке...</p>
-                        <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Обновление получено</p>
                     </div>
                     
                     <div class="auto-refresh">
-                        Сайт автоматически перезагрузится через <span id="countdown">30</span> секунд
+                        Сайт автоматически перезагрузится через <span id="countdown">15</span> секунд
                     </div>
                 </div>
             </div>
         `;
         
         this.reinitializeModules();
-        
-        // Запускаем обновительную мелодию
-        let melodyIntervalId = null;
-        if (window.soundSystem && window.soundSystem.startLoopingUpdateMelody) {
-            melodyIntervalId = window.soundSystem.startLoopingUpdateMelody();
-        }
-        
-        // Запускаем 30-секундный таймер
-        this.startSimpleCountdown(30, melodyIntervalId);
+        this.startSimpleCountdown(15);
     }
     
-    // Тестовая функция для проверки системы обновления
-    testUpdateSystem() {
-        const fakeCommit = {
-            sha: 'test1234567890abcdef',
-            commit: {
-                message: 'Тестовое обновление для проверки системы через backend',
-                author: {
-                    name: 'Backend Test',
-                    date: new Date().toISOString()
-                }
-            }
-        };
-        
-        console.log('🧪 Запуск тестового обновления...');
-        this.handleNewUpdate(fakeCommit);
-    }
-    
-    startSimpleCountdown(seconds, melodyIntervalId = null) {
+    startSimpleCountdown(seconds) {
         let remaining = seconds;
         const countdownEl = document.getElementById('countdown');
         
@@ -520,11 +386,6 @@ class App {
             
             if (remaining <= 0) {
                 clearInterval(timer);
-                
-                if (melodyIntervalId && window.soundSystem) {
-                    window.soundSystem.stopLoopingMelody(melodyIntervalId);
-                }
-                
                 window.location.reload();
             }
         }, 1000);
@@ -540,7 +401,7 @@ class App {
                 console.log('🟢 Backend доступен');
             }
         } catch (error) {
-            console.log('🔴 Backend недоступен:', error.message);
+            console.log('🔴 Backend недоступен');
             this.showOfflinePage();
         }
     }
@@ -550,9 +411,6 @@ class App {
         const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
         
         document.body.innerHTML = `
-            <button onclick="window.open('${config ? config.getIssueUrl('home') : '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
-            <button onclick="window.changelogModule?.show()" class="changelog-btn">📋 Логи обновлений</button>
-            
             <div id="notifications-container" class="notifications-container"></div>
             <div id="modal-overlay" class="modal-overlay"></div>
             
@@ -589,7 +447,6 @@ class App {
         
         this.reinitializeModules();
         
-        // Автоматическая проверка восстановления backend
         const retryInterval = window.RkMConfig?.intervals?.offlineRetry || 10000;
         setInterval(async () => {
             const connected = await window.api.testConnection();
@@ -601,7 +458,6 @@ class App {
     }
     
     reinitializeModules() {
-        // Переинициализируем модули после изменения DOM
         setTimeout(() => {
             if (window.notifications) {
                 window.notifications.updateContainer();
@@ -615,26 +471,31 @@ class App {
         }, 100);
     }
     
-    // Методы для разработки и отладки
-    debug() {
-        return {
-            currentPage: this.currentPage,
-            isUpdating: this.isUpdating,
-            updateCheckInterval: this.updateCheckInterval,
-            testUpdate: () => this.testUpdateSystem(),
-            checkUpdates: () => this.checkForUpdates(),
-            goHome: () => this.showHomePage()
+    // Тест обновления для разработчиков
+    testUpdateSystem() {
+        const fakeCommit = {
+            sha: 'test1234567',
+            commit: {
+                message: 'Тестовое обновление системы',
+                author: {
+                    name: 'Test Developer',
+                    date: new Date().toISOString()
+                }
+            }
         };
+        
+        this.handleNewUpdate(fakeCommit);
     }
 }
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
-    
-    // Добавляем debug методы в консоль для разработки
-    if (window.RkMConfig?.isDevelopment()) {
-        window.debugApp = () => window.app.debug();
-        console.log('🔧 Режим разработки: используйте debugApp() для отладки');
+    // Сообщение о получении обновления после перезагрузки
+    const updateInfo = localStorage.getItem('rkm_update_detected');
+    if (updateInfo) {
+        localStorage.removeItem('rkm_update_detected');
+        console.log('☑️ Обновление получено');
     }
+    
+    window.app = new App();
 });

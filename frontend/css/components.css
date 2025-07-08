@@ -1,6 +1,6 @@
-/* === УЛУЧШЕННЫЕ КОМПОНЕНТЫ === */
+/* === КОМПОНЕНТЫ === */
 
-/* === МОДАЛЬНЫЕ ОКНА (СУПЕР УЛУЧШЕННЫЕ) === */
+/* === МОДАЛЬНЫЕ ОКНА === */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -75,12 +75,12 @@
 
 .modal-close {
     position: absolute;
-    top: -1rem;
-    right: -1rem;
+    top: -2rem;
+    right: -2rem;
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: var(--text-muted);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
     transition: all var(--transition-normal);
     width: 40px;
@@ -98,121 +98,114 @@
     transform: scale(1.1);
 }
 
-/* === УВЕДОМЛЕНИЯ (КРУТЫЕ) === */
+.modal-body {
+    overflow-y: auto;
+    max-height: calc(90vh - 200px);
+}
+
+/* === УВЕДОМЛЕНИЯ === */
 .notifications-container {
     position: fixed;
-    top: 25px;
-    right: 25px;
-    z-index: 3000;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    max-width: 450px;
+    gap: 12px;
+    max-width: 400px;
+    pointer-events: none;
 }
 
 .notification {
-    background: var(--gradient-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    padding: 1.5rem 2rem;
-    min-width: 400px;
-    color: var(--text-primary);
-    transform: translateX(500px);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(42, 42, 42, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #ffffff;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    transform: translateX(420px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-    box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 var(--shadow-light);
-    backdrop-filter: blur(30px);
-}
-
-.notification::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 4px;
-    background: var(--accent-blue);
-    transition: all var(--transition-normal);
+    pointer-events: all;
+    border-left: 4px solid #007bff;
 }
 
 .notification.show {
     transform: translateX(0);
 }
 
-.notification.success::before {
-    background: linear-gradient(180deg, var(--accent-green), #20c997);
+.notification.success {
+    border-left-color: #28a745;
 }
 
-.notification.error::before {
-    background: linear-gradient(180deg, var(--accent-red), #e74c3c);
+.notification.error {
+    border-left-color: #dc3545;
 }
 
-.notification.info::before {
-    background: linear-gradient(180deg, #17a2b8, #3498db);
+.notification.warning {
+    border-left-color: #ffc107;
 }
 
-.notification.warning::before {
-    background: linear-gradient(180deg, var(--accent-yellow), #f39c12);
+.notification.info {
+    border-left-color: #17a2b8;
 }
 
 .notification-content {
     display: flex;
-    align-items: flex-start;
-    gap: 15px;
+    align-items: center;
+    gap: 12px;
+    position: relative;
 }
 
 .notification-icon {
-    font-size: 1.8rem;
-    margin-top: 2px;
+    font-size: 20px;
     flex-shrink: 0;
-    filter: drop-shadow(0 0 10px currentColor);
 }
 
 .notification-text {
     flex: 1;
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.4;
     font-weight: 500;
+    padding-right: 30px;
 }
 
 .notification-close {
     position: absolute;
-    top: 12px;
-    right: 15px;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
-    font-size: 1.4rem;
-    transition: all var(--transition-normal);
-    width: 30px;
-    height: 30px;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .notification-close:hover {
-    color: var(--text-primary);
+    color: #ffffff;
     background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
 }
 
-/* Прогресс бар для автозакрытия */
 .notification-progress {
     position: absolute;
     bottom: 0;
     left: 0;
-    height: 3px;
+    height: 2px;
     background: rgba(255, 255, 255, 0.3);
     width: 100%;
     transform-origin: right;
-    animation: progressBar 5s linear;
-    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+    border-radius: 0 0 12px 12px;
 }
 
 @keyframes progressBar {
@@ -220,7 +213,7 @@
     to { transform: scaleX(0); }
 }
 
-/* === CHANGELOG МОДУЛЬ (TIMELINE СТИЛЬ) === */
+/* === CHANGELOG === */
 .changelog-modal .modal {
     max-width: 1000px;
     max-height: 90vh;
@@ -280,65 +273,289 @@
     box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
 }
 
-/* Фильтры для логов */
-.changelog-filters {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+.commits-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 1rem;
 }
 
-.filter-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-muted);
-    padding: 8px 16px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(10px);
-}
-
-.filter-btn.active,
-.filter-btn:hover {
-    background: rgba(0, 123, 255, 0.2);
-    border-color: var(--accent-blue);
-    color: var(--accent-blue);
-    transform: translateY(-1px);
-}
-
-/* Поиск */
-.changelog-search {
-    position: relative;
-    margin-bottom: 2rem;
-}
-
-.search-input {
-    width: 100%;
-    padding: 15px 50px 15px 20px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+.commit-item {
+    background: var(--gradient-primary);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    transition: all var(--transition-normal);
+}
+
+.commit-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.commit-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.commit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.commit-sha {
+    background: rgba(255, 193, 7, 0.15);
+    color: var(--accent-yellow);
+    padding: 4px 12px;
+    border-radius: var(--border-radius-sm);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.commit-time {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.commit-message {
     color: var(--text-primary);
     font-size: 1rem;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(10px);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    word-wrap: break-word;
 }
 
-.search-input:focus {
-    outline: none;
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-    background: rgba(0, 123, 255, 0.1);
+.commit-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
-.search-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
+.author-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+}
+
+.commit-date {
     color: var(--text-muted);
-    font-size: 1.2rem;
-    pointer-events: none;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+/* === ERROR STATES === */
+.error-message, .repo-not-found {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+}
+
+.error-icon, .repo-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.error-message h3, .repo-not-found h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.error-message p, .repo-not-found p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.repo-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius-md);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.repo-info ul {
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+}
+
+.repo-info li {
+    margin-bottom: 0.5rem;
+}
+
+.retry-btn, .create-repo-btn {
+    background: var(--gradient-glow);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all var(--transition-normal);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    margin-top: 1rem;
+}
+
+.retry-btn:hover, .create-repo-btn:hover {
+    background: linear-gradient(145deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 123, 255, 0.4);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .notifications-container {
+        right: 10px;
+        top: 10px;
+        max-width: calc(100vw - 20px);
+    }
+    
+    .notification {
+        transform: translateX(calc(100vw + 20px));
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .notification.show {
+        transform: translateX(0);
+    }
+    
+    .modal {
+        margin: 20px;
+        width: calc(100% - 40px);
+        padding: 2rem;
+        max-height: calc(100vh - 40px);
+    }
+    
+    .modal-title {
+        font-size: 1.8rem;
+    }
+    
+    .changelog-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .changelog-controls {
+        justify-content: center;
+    }
+    
+    .commit-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .commit-item {
+        padding: 1rem;
+    }
+    
+    .commits-list {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal {
+        margin: 10px;
+        width: calc(100% - 20px);
+        padding: 1.5rem;
+        max-height: calc(100vh - 20px);
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+    }
+    
+    .modal-close {
+        top: -1rem;
+        right: -1rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.4rem;
+    }
+    
+    .notification {
+        padding: 12px 16px;
+    }
+    
+    .notification-text {
+        font-size: 13px;
+        padding-right: 25px;
+    }
+    
+    .notification-close {
+        width: 20px;
+        height: 20px;
+        font-size: 16px;
+    }
+    
+    .commit-item {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .commit-message {
+        font-size: 0.9rem;
+    }
+    
+    .changelog-header {
+        padding: 1rem;
+    }
+    
+    .error-message, .repo-not-found {
+        padding: 2rem 1rem;
+    }
+    
+    .error-icon, .repo-icon {
+        font-size: 3rem;
+    }
+}
+
+/* === PERFORMANCE MODE === */
+.performance-mode .modal {
+    backdrop-filter: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.performance-mode .notification {
+    backdrop-filter: none;
+}
+
+.performance-mode .changelog-header {
+    backdrop-filter: none;
+}
+
+/* === NO ANIMATIONS === */
+.no-animations .modal {
+    transition: none !important;
+    transform: none !important;
+}
+
+.no-animations .notification {
+    transition: none !important;
+    transform: none !important;
+}
+
+.no-animations .commit-item {
+    transition: none !important;
 }

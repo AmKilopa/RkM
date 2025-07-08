@@ -14,8 +14,10 @@ class ChangelogModule {
                 </div>
                 <div class="modal-body">
                     <div id="changelog-content">
-                        <div class="loading-spinner"></div>
-                        <p>Загружаем историю изменений...</p>
+                        <div style="text-align: center; padding: 3rem;">
+                            <div class="loading-spinner"></div>
+                            <p style="margin-top: 1rem; color: var(--text-muted);">Загружаем историю изменений...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -39,7 +41,6 @@ class ChangelogModule {
         try {
             const response = await fetch(`${config.apiUrl}/commits?per_page=20`);
             
-            // Если репозиторий не найден
             if (response.status === 404) {
                 this.renderRepositoryNotFound();
                 this.isLoading = false;
@@ -53,7 +54,6 @@ class ChangelogModule {
             this.commits = await response.json();
             this.renderCommits();
         } catch (error) {
-            console.log('📋 Ошибка загрузки коммитов:', error.message);
             this.renderError();
         }
         
@@ -76,7 +76,7 @@ class ChangelogModule {
                     </div>
                     <div class="commit-message">${this.escapeHtml(commit.commit.message)}</div>
                     <div class="commit-author">
-                        <img src="${commit.author?.avatar_url || ''}" alt="" class="author-avatar">
+                        ${commit.author?.avatar_url ? `<img src="${commit.author.avatar_url}" alt="" class="author-avatar">` : ''}
                         <span>${commit.commit.author.name}</span>
                     </div>
                     <div class="commit-date">${date.toLocaleString('ru')}</div>
@@ -86,8 +86,13 @@ class ChangelogModule {
         
         content.innerHTML = `
             <div class="changelog-header">
-                <p>История последних ${this.commits.length} изменений</p>
-                <button onclick="window.changelogModule.refresh()" class="refresh-btn">🔄 Обновить</button>
+                <div>
+                    <h2>📋 История изменений</h2>
+                    <p>Последние ${this.commits.length} коммитов</p>
+                </div>
+                <div class="changelog-controls">
+                    <button onclick="window.changelogModule.refresh()" class="refresh-btn">🔄 Обновить</button>
+                </div>
             </div>
             <div class="commits-list">
                 ${commitsHtml}
@@ -146,7 +151,7 @@ class ChangelogModule {
                 <h3>Ошибка загрузки</h3>
                 <p>Не удалось загрузить историю изменений</p>
                 <button onclick="window.changelogModule.loadCommits()" class="retry-btn">
-                    Попробовать снова
+                    🔄 Попробовать снова
                 </button>
             </div>
         `;
@@ -156,8 +161,10 @@ class ChangelogModule {
         const content = document.getElementById('changelog-content');
         if (content) {
             content.innerHTML = `
-                <div class="loading-spinner"></div>
-                <p>Обновляем данные...</p>
+                <div style="text-align: center; padding: 3rem;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 1rem; color: var(--text-muted);">Обновляем данные...</p>
+                </div>
             `;
         }
         await this.loadCommits();

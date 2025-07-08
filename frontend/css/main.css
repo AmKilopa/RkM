@@ -1,4 +1,4 @@
-/* === ОСНОВНЫЕ СТИЛИ (УЛУЧШЕННЫЕ) === */
+/* === ОСНОВНЫЕ СТИЛИ === */
 * {
     margin: 0;
     padding: 0;
@@ -40,7 +40,7 @@ body {
     scroll-behavior: smooth;
 }
 
-/* Убираем скроллбары с лучшей поддержкой */
+/* Скроллбары */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -81,7 +81,7 @@ body {
     transform: translateY(0);
 }
 
-/* === ГЛАВНАЯ СТРАНИЦА (УЛУЧШЕННАЯ) === */
+/* === ГЛАВНАЯ СТРАНИЦА === */
 .main-container {
     display: flex;
     flex-direction: column;
@@ -136,23 +136,23 @@ body {
 .buttons-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem; /* Уменьшено с 1.5rem */
     width: 100%;
     max-width: 500px;
 }
 
-/* === КНОПКИ (СУПЕР УЛУЧШЕННЫЕ) === */
+/* === КНОПКИ === */
 .main-btn {
     background: var(--gradient-primary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 2rem 2.5rem;
+    padding: 1.5rem 2rem; /* Уменьшено с 2rem 2.5rem */
     font-size: 1.2rem;
     cursor: pointer;
     border-radius: var(--border-radius-lg);
     transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    min-height: 90px;
+    min-height: 70px; /* Уменьшено с 90px */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -210,7 +210,7 @@ body {
     font-weight: 400;
 }
 
-/* Специальные эффекты для разных кнопок */
+/* Специальные эффекты для кнопок */
 .main-btn[id="inventory-btn"]:hover:not(.disabled) {
     box-shadow: 
         0 15px 50px rgba(0, 0, 0, 0.4),
@@ -232,8 +232,8 @@ body {
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-/* === ТОПОВЫЕ КНОПКИ === */
-.bug-report-btn, .back-btn, .changelog-btn {
+/* === НАВИГАЦИОННЫЕ КНОПКИ === */
+.bug-report-btn, .back-btn, .changelog-btn, .settings-btn {
     position: fixed;
     z-index: 1000;
     border: none;
@@ -246,6 +246,8 @@ body {
     transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
     letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
 }
 
 .bug-report-btn {
@@ -288,7 +290,35 @@ body {
     box-shadow: 0 8px 30px rgba(40, 167, 69, 0.4);
 }
 
-/* === ФОРМЫ (УЛУЧШЕННЫЕ) === */
+.settings-btn {
+    top: 25px;
+    left: 25px;
+    background: linear-gradient(145deg, #6f42c1, #5a359a);
+    box-shadow: 0 4px 20px rgba(111, 66, 193, 0.3);
+}
+
+.settings-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.settings-btn:hover::before {
+    left: 100%;
+}
+
+.settings-btn:hover {
+    background: linear-gradient(145deg, #5a359a, #4c2a85);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(111, 66, 193, 0.4);
+}
+
+/* === ФОРМЫ === */
 .form-container {
     max-width: 650px;
     margin: 5rem auto 2rem;
@@ -318,7 +348,7 @@ body {
     transition: color var(--transition-normal);
 }
 
-.form-input {
+.form-input, .setting-input {
     width: 100%;
     padding: 18px 24px;
     background: rgba(0, 0, 0, 0.5);
@@ -330,7 +360,7 @@ body {
     backdrop-filter: blur(10px);
 }
 
-.form-input:focus {
+.form-input:focus, .setting-input:focus {
     outline: none;
     border-color: var(--accent-blue);
     box-shadow: 
@@ -402,7 +432,44 @@ body {
     box-shadow: 0 8px 30px rgba(220, 53, 69, 0.4);
 }
 
-/* === СТАТУС СТРАНИЦЫ (СУПЕР УЛУЧШЕННЫЕ) === */
+.btn-secondary {
+    background: linear-gradient(145deg, #6c757d, #5a6268);
+    box-shadow: 0 4px 20px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(145deg, #5a6268, #495057);
+    box-shadow: 0 8px 30px rgba(108, 117, 125, 0.4);
+}
+
+.btn-info {
+    background: linear-gradient(145deg, #17a2b8, #138496);
+    box-shadow: 0 4px 20px rgba(23, 162, 184, 0.3);
+}
+
+.btn-info:hover {
+    background: linear-gradient(145deg, #138496, #117a8b);
+    box-shadow: 0 8px 30px rgba(23, 162, 184, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(145deg, var(--accent-yellow), #e0a800);
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(145deg, #e0a800, #d39e00);
+    box-shadow: 0 8px 30px rgba(255, 193, 7, 0.4);
+    color: #000;
+}
+
+.btn-primary {
+    background: var(--gradient-glow);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+}
+
+/* === СТАТУС СТРАНИЦЫ === */
 .status-page {
     position: fixed;
     top: 0;
@@ -422,6 +489,7 @@ body {
     margin-bottom: 2rem;
     display: block;
     filter: drop-shadow(0 0 20px currentColor);
+    text-align: center;
 }
 
 .status-icon.rotating {
@@ -442,7 +510,14 @@ body {
     100% { filter: drop-shadow(0 0 30px currentColor); }
 }
 
-/* === ИНФОРМАЦИОННЫЕ БЛОКИ (УЛУЧШЕННЫЕ) === */
+.update-message, .offline-message {
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+/* === ИНФОРМАЦИОННЫЕ БЛОКИ === */
 .commit-info {
     background: var(--gradient-primary);
     border-radius: var(--border-radius-lg);
@@ -519,7 +594,7 @@ body {
     margin-top: 1rem;
 }
 
-/* === ЗАГРУЗКА (УЛУЧШЕННАЯ) === */
+/* === ЗАГРУЗКА === */
 .loading-section {
     margin: 2rem 0;
     text-align: center;
@@ -547,7 +622,7 @@ body {
     font-weight: 500;
 }
 
-/* === ИНДИКАТОРЫ (УЛУЧШЕННЫЕ) === */
+/* === ИНДИКАТОРЫ === */
 .auto-refresh {
     display: flex;
     align-items: center;
@@ -606,7 +681,53 @@ body {
     color: var(--accent-yellow);
 }
 
-/* === МОБИЛЬНАЯ АДАПТАЦИЯ (СУПЕР УЛУЧШЕННАЯ) === */
+/* === АНИМАЦИИ === */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.main-btn {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.main-btn:nth-child(1) { animation-delay: 0.1s; }
+.main-btn:nth-child(2) { animation-delay: 0.2s; }
+.main-btn:nth-child(3) { animation-delay: 0.3s; }
+
+/* === ТИПОГРАФИКА === */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+p {
+    line-height: 1.6;
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
 @media (max-width: 768px) {
     .main-title {
         font-size: 3.5rem;
@@ -614,9 +735,9 @@ body {
     }
     
     .main-btn {
-        padding: 1.5rem 2rem;
-        font-size: 1.1rem;
-        min-height: 80px;
+        padding: 1.2rem 1.5rem; /* Уменьшено */
+        font-size: 1rem;
+        min-height: 60px; /* Уменьшено */
         touch-action: manipulation;
     }
     
@@ -627,10 +748,19 @@ body {
     }
     
     .bug-report-btn,
-    .back-btn {
+    .back-btn,
+    .settings-btn {
         padding: 10px 16px;
         font-size: 0.9rem;
         top: 15px;
+    }
+    
+    .bug-report-btn {
+        right: 15px;
+    }
+    
+    .settings-btn {
+        left: 15px;
     }
     
     .changelog-btn {
@@ -657,13 +787,13 @@ body {
     }
     
     .main-btn {
-        padding: 1.2rem 1.5rem;
-        font-size: 1rem;
-        min-height: 70px;
+        padding: 1rem 1.2rem; /* Еще более компактно */
+        font-size: 0.95rem;
+        min-height: 55px; /* Еще меньше */
     }
     
     .buttons-container {
-        gap: 1rem;
+        gap: 0.8rem; /* Меньший промежуток */
     }
     
     .form-container {
@@ -687,6 +817,18 @@ body {
         gap: 0.5rem;
         padding: 1rem;
     }
+    
+    .status-container {
+        padding: 1.5rem;
+    }
+    
+    .status-icon {
+        font-size: 2.5rem;
+    }
+    
+    .status-container h1 {
+        font-size: 1.8rem;
+    }
 }
 
 @media (max-width: 320px) {
@@ -699,73 +841,44 @@ body {
     }
     
     .main-btn {
-        padding: 1rem;
-        font-size: 0.95rem;
-        min-height: 60px;
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+        min-height: 50px;
     }
     
     .bug-report-btn,
     .back-btn,
-    .changelog-btn {
+    .changelog-btn,
+    .settings-btn {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
-}
-
-/* === ДОПОЛНИТЕЛЬНЫЕ АНИМАЦИИ === */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    
+    .buttons-container {
+        gap: 0.6rem;
     }
 }
 
-.main-btn {
-    animation: fadeInUp 0.6s ease forwards;
+/* === СОСТОЯНИЯ === */
+.no-animations * {
+    animation: none !important;
+    transition: none !important;
 }
 
-.main-btn:nth-child(1) { animation-delay: 0.1s; }
-.main-btn:nth-child(2) { animation-delay: 0.2s; }
-.main-btn:nth-child(3) { animation-delay: 0.3s; }
-
-/* === УЛУЧШЕННАЯ ТИПОГРАФИКА === */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
+.compact-mode .main-btn {
+    padding: 1rem 1.5rem;
+    min-height: 50px;
 }
 
-p {
-    line-height: 1.6;
+.compact-mode .form-container {
+    padding: 2rem;
 }
 
-/* === ACCESSIBILITY === */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
+.performance-mode .status-page {
+    backdrop-filter: none;
 }
 
-/* Focus стили для доступности */
-button:focus-visible,
-input:focus-visible {
-    outline: 2px solid var(--accent-blue);
-    outline-offset: 2px;
-}
-
-/* === КАСТОМНЫЕ СВОЙСТВА ДЛЯ ТЕМИЗАЦИИ === */
-[data-theme="light"] {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #e9ecef;
-    --text-primary: #212529;
-    --text-secondary: #495057;
-    --text-muted: #6c757d;
-    --border-color: #dee2e6;
+.performance-mode .form-container {
+    backdrop-filter: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }

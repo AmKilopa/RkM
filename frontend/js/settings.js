@@ -2,15 +2,12 @@
 class Settings {
     constructor() {
         this.currentSection = 'sound';
+        this.developerPassword = null;
+        this.isDeveloperUnlocked = false;
         this.sections = {
             'sound': {
                 title: '🔊 Звук',
                 icon: '🔊',
-                active: true
-            },
-            'theme': {
-                title: '🎨 Тема',
-                icon: '🎨',
                 active: true
             },
             'interface': {
@@ -23,80 +20,83 @@ class Settings {
                 icon: '⚡',
                 active: true
             },
-            'advanced': {
-                title: '🔧 Дополнительно',
+            'developer': {
+                title: '🔧 Разработчик',
                 icon: '🔧',
-                active: true
+                active: true,
+                requiresPassword: true
             }
         };
         
         this.settings = {
-            theme: 'dark',
-            language: 'ru',
             animations: true,
             autoSave: true,
             notifications: true,
             compactMode: false,
             showTooltips: true,
             autoUpdate: true,
-            debugMode: false,
             performanceMode: false
         };
         
         this.loadSettings();
+        this.loadDeveloperPassword();
         this.setupEventListeners();
     }
     
-    // Загрузка настроек
+    async loadDeveloperPassword() {
+        try {
+            const response = await fetch('js/.env');
+            const envText = await response.text();
+            const lines = envText.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('DEVELOPER_PASSWORD=')) {
+                    this.developerPassword = line.split('=')[1].trim();
+                    break;
+                }
+            }
+        } catch (error) {
+            this.developerPassword = 'dev2024rkm';
+        }
+    }
+    
     loadSettings() {
         const saved = localStorage.getItem('rkm_settings');
         if (saved) {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(saved) };
             } catch (e) {
-                console.warn('Ошибка загрузки настроек:', e);
+                // Игнорируем ошибки
             }
         }
     }
     
-    // Сохранение настроек
     saveSettings() {
         localStorage.setItem('rkm_settings', JSON.stringify(this.settings));
         this.applySettings();
     }
     
-    // Применение настроек
     applySettings() {
-        // Применяем тему
-        document.documentElement.setAttribute('data-theme', this.settings.theme);
-        
-        // Применяем анимации
         if (!this.settings.animations) {
             document.body.classList.add('no-animations');
         } else {
             document.body.classList.remove('no-animations');
         }
         
-        // Компактный режим
         if (this.settings.compactMode) {
             document.body.classList.add('compact-mode');
         } else {
             document.body.classList.remove('compact-mode');
         }
         
-        // Режим производительности
         if (this.settings.performanceMode) {
             document.body.classList.add('performance-mode');
         } else {
             document.body.classList.remove('performance-mode');
         }
-        
-        console.log('Настройки применены:', this.settings);
     }
     
-    // Установка событий
     setupEventListeners() {
-        // Кнопка настроек
         const settingsBtn = document.getElementById('settings-btn');
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => {
@@ -104,7 +104,6 @@ class Settings {
             });
         }
         
-        // Клавиатурные сочетания
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === ',') {
                 e.preventDefault();
@@ -113,26 +112,21 @@ class Settings {
         });
     }
     
-    // Открытие окна настроек
     openSettings() {
         const modal = this.createSettingsModal();
         document.body.appendChild(modal);
         
-        // Показываем модальное окно
         setTimeout(() => {
             modal.classList.add('active');
         }, 10);
         
-        // Привязываем события
         this.bindSettingsEvents();
         
-        // Воспроизводим звук
         if (window.soundSystem) {
             window.soundSystem.playInterface();
         }
     }
     
-    // Создание модального окна настроек
     createSettingsModal() {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay settings-modal';
@@ -152,37 +146,34 @@ class Settings {
                         ${this.createSettingsContent()}
                     </div>
                 </div>
-                
-                <div class="settings-footer">
-                    <button class="btn btn-secondary" onclick="window.settings.resetAllSettings()">
-                        🔄 Сбросить всё
-                    </button>
-                    <button class="btn btn-success" onclick="window.settings.exportSettings()">
-                        📤 Экспорт
-                    </button>
-                    <button class="btn btn-primary" onclick="window.settings.importSettings()">
-                        📥 Импорт
-                    </button>
-                </div>
             </div>
         `;
         
         return modal;
     }
     
-    // Создание боковой панели разделов
     createSettingsSidebar() {
         let html = '<div class="settings-tabs">';
         
         Object.entries(this.sections).forEach(([key, section]) => {
             if (section.active) {
-                html += `
-                    <button class="settings-tab ${key === this.currentSection ? 'active' : ''}" 
-                            data-section="${key}">
-                        <span class="tab-icon">${section.icon}</span>
-                        <span class="tab-text">${section.title}</span>
-                    </button>
-                `;
+                if (key === 'developer' && !this.isDeveloperUnlocked) {
+                    html += `
+                        <button class="settings-tab developer-locked" 
+                                data-section="${key}">
+                            <span class="tab-icon">🔒</span>
+                            <span class="tab-text">${section.title}</span>
+                        </button>
+                    `;
+                } else {
+                    html += `
+                        <button class="settings-tab ${key === this.currentSection ? 'active' : ''}" 
+                                data-section="${key}">
+                            <span class="tab-icon">${section.icon}</span>
+                            <span class="tab-text">${section.title}</span>
+                        </button>
+                    `;
+                }
             }
         });
         
@@ -190,86 +181,25 @@ class Settings {
         return html;
     }
     
-    // Создание контента настроек
     createSettingsContent() {
         switch (this.currentSection) {
             case 'sound':
                 return window.soundSettings ? window.soundSettings.createSoundSettingsUI() : this.createPlaceholder('Звуковые настройки загружаются...');
-            case 'theme':
-                return this.createThemeSettings();
             case 'interface':
                 return this.createInterfaceSettings();
             case 'performance':
                 return this.createPerformanceSettings();
-            case 'advanced':
-                return this.createAdvancedSettings();
+            case 'developer':
+                return this.isDeveloperUnlocked ? this.createDeveloperSettings() : this.createDeveloperLogin();
             default:
                 return this.createPlaceholder('Раздел не найден');
         }
     }
     
-    // Настройки темы
-    createThemeSettings() {
-        return `
-            <div class="settings-section" id="theme-settings">
-                <h3 class="settings-section-title">🎨 Настройки темы</h3>
-                
-                <div class="setting-group">
-                    <div class="setting-item">
-                        <label class="setting-label">
-                            <span>Тема оформления</span>
-                            <select id="theme-select" class="setting-select">
-                                <option value="dark" ${this.settings.theme === 'dark' ? 'selected' : ''}>Тёмная</option>
-                                <option value="light" ${this.settings.theme === 'light' ? 'selected' : ''}>Светлая</option>
-                                <option value="auto" ${this.settings.theme === 'auto' ? 'selected' : ''}>Автоматическая</option>
-                                <option value="blue" ${this.settings.theme === 'blue' ? 'selected' : ''}>Синяя</option>
-                                <option value="green" ${this.settings.theme === 'green' ? 'selected' : ''}>Зелёная</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h4 class="setting-group-title">Предпросмотр тем</h4>
-                    <div class="theme-preview-grid">
-                        <div class="theme-preview ${this.settings.theme === 'dark' ? 'active' : ''}" data-theme="dark">
-                            <div class="preview-header dark-theme"></div>
-                            <div class="preview-content dark-theme"></div>
-                            <span>Тёмная</span>
-                        </div>
-                        <div class="theme-preview ${this.settings.theme === 'light' ? 'active' : ''}" data-theme="light">
-                            <div class="preview-header light-theme"></div>
-                            <div class="preview-content light-theme"></div>
-                            <span>Светлая</span>
-                        </div>
-                        <div class="theme-preview ${this.settings.theme === 'blue' ? 'active' : ''}" data-theme="blue">
-                            <div class="preview-header blue-theme"></div>
-                            <div class="preview-content blue-theme"></div>
-                            <span>Синяя</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Настройки интерфейса
     createInterfaceSettings() {
         return `
             <div class="settings-section" id="interface-settings">
                 <h3 class="settings-section-title">🖥️ Настройки интерфейса</h3>
-                
-                <div class="setting-group">
-                    <div class="setting-item">
-                        <label class="setting-label">
-                            <span>Язык интерфейса</span>
-                            <select id="language-select" class="setting-select">
-                                <option value="ru" ${this.settings.language === 'ru' ? 'selected' : ''}>Русский</option>
-                                <option value="en" ${this.settings.language === 'en' ? 'selected' : ''}>English</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
                 
                 <div class="setting-group">
                     <div class="setting-item">
@@ -280,43 +210,52 @@ class Settings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Включает плавные анимации и переходы</p>
                     </div>
                 </div>
                 
-                <div class="setting-item">
-                    <label class="setting-label">
-                        <span>Компактный режим</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="compact-mode" ${this.settings.compactMode ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </div>
-                    </label>
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <span>Компактный режим</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="compact-mode" ${this.settings.compactMode ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                        <p class="setting-description">Уменьшает отступы и размеры элементов интерфейса</p>
+                    </div>
                 </div>
                 
-                <div class="setting-item">
-                    <label class="setting-label">
-                        <span>Показывать подсказки</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="show-tooltips" ${this.settings.showTooltips ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </div>
-                    </label>
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <span>Показывать подсказки</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="show-tooltips" ${this.settings.showTooltips ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                        <p class="setting-description">Отображает всплывающие подсказки при наведении</p>
+                    </div>
                 </div>
                 
-                <div class="setting-item">
-                    <label class="setting-label">
-                        <span>Уведомления</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="notifications-enabled" ${this.settings.notifications ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </div>
-                    </label>
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <span>Уведомления</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="notifications-enabled" ${this.settings.notifications ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                        <p class="setting-description">Включает системные уведомления</p>
+                    </div>
                 </div>
             </div>
         `;
     }
     
-    // Настройки производительности
     createPerformanceSettings() {
         return `
             <div class="settings-section" id="performance-settings">
@@ -335,61 +274,96 @@ class Settings {
                     </div>
                 </div>
                 
-                <div class="setting-item">
-                    <label class="setting-label">
-                        <span>Автосохранение</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="auto-save" ${this.settings.autoSave ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </div>
-                    </label>
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <span>Автосохранение</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="auto-save" ${this.settings.autoSave ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                        <p class="setting-description">Автоматически сохраняет настройки при изменении</p>
+                    </div>
                 </div>
-                
-                <div class="setting-item">
-                    <label class="setting-label">
-                        <span>Автообновления</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" id="auto-update" ${this.settings.autoUpdate ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Дополнительные настройки
-    createAdvancedSettings() {
-        return `
-            <div class="settings-section" id="advanced-settings">
-                <h3 class="settings-section-title">🔧 Дополнительные настройки</h3>
                 
                 <div class="setting-group">
                     <div class="setting-item">
                         <label class="setting-label">
-                            <span>Режим разработчика</span>
+                            <span>Автообновления</span>
                             <div class="toggle-switch">
-                                <input type="checkbox" id="debug-mode" ${this.settings.debugMode ? 'checked' : ''}>
+                                <input type="checkbox" id="auto-update" ${this.settings.autoUpdate ? 'checked' : ''}>
                                 <span class="slider"></span>
                             </div>
                         </label>
-                        <p class="setting-description">Включает дополнительную информацию для отладки</p>
+                        <p class="setting-description">Автоматически проверяет и применяет обновления</p>
                     </div>
-                </div>
-                
-                <div class="setting-actions">
-                    <button class="btn btn-danger" onclick="window.settings.clearAllData()">
-                        🗑️ Очистить данные
-                    </button>
-                    <button class="btn btn-warning" onclick="window.settings.showSystemInfo()">
-                        ℹ️ Информация о системе
-                    </button>
                 </div>
             </div>
         `;
     }
     
-    // Заглушка для разделов
+    createDeveloperLogin() {
+        return `
+            <div class="settings-section" id="developer-login">
+                <h3 class="settings-section-title">🔒 Доступ разработчика</h3>
+                
+                <div class="setting-group">
+                    <div class="developer-login-form">
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">
+                            Для доступа к настройкам разработчика введите пароль
+                        </p>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Пароль</span>
+                                <input type="password" id="developer-password" class="setting-input" placeholder="Введите пароль разработчика">
+                            </label>
+                        </div>
+                        
+                        <div class="setting-actions">
+                            <button class="btn btn-primary" onclick="window.settings.unlockDeveloper()">
+                                🔓 Войти
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    createDeveloperSettings() {
+        return `
+            <div class="settings-section" id="developer-settings">
+                <h3 class="settings-section-title">🔧 Настройки разработчика</h3>
+                
+                <div class="setting-group">
+                    <h4 class="setting-group-title">Инструменты разработчика</h4>
+                    <p style="color: var(--text-warning); margin-bottom: 1rem;">
+                        ⚠️ Эти настройки предназначены только для разработчиков
+                    </p>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-actions">
+                        <button class="btn btn-secondary" onclick="window.app.testUpdateSystem()">
+                            🧪 Тест обновления
+                        </button>
+                        <button class="btn btn-info" onclick="window.settings.showSystemInfo()">
+                            ℹ️ Информация о системе
+                        </button>
+                        <button class="btn btn-warning" onclick="window.settings.clearAllData()">
+                            🗑️ Очистить данные
+                        </button>
+                        <button class="btn btn-danger" onclick="window.settings.lockDeveloper()">
+                            🔒 Выйти
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
     createPlaceholder(text) {
         return `
             <div class="settings-placeholder">
@@ -399,81 +373,64 @@ class Settings {
         `;
     }
     
-    // Привязка событий настроек
     bindSettingsEvents() {
-        // Переключение разделов
         document.querySelectorAll('.settings-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const section = e.currentTarget.dataset.section;
+                
+                if (section === 'developer' && !this.isDeveloperUnlocked) {
+                    return;
+                }
+                
                 this.switchSection(section);
             });
         });
         
-        // Звуковые настройки
         if (window.soundSettings) {
             window.soundSettings.bindSoundSettingsEvents();
         }
         
-        // Остальные настройки
         this.bindGeneralSettings();
     }
     
-    // Привязка общих настроек
     bindGeneralSettings() {
-        // Тема
-        const themeSelect = document.getElementById('theme-select');
-        if (themeSelect) {
-            themeSelect.addEventListener('change', (e) => {
-                this.setSetting('theme', e.target.value);
-            });
-        }
-        
-        // Язык
-        const languageSelect = document.getElementById('language-select');
-        if (languageSelect) {
-            languageSelect.addEventListener('change', (e) => {
-                this.setSetting('language', e.target.value);
-            });
-        }
-        
-        // Чекбоксы
         const checkboxes = [
             'animations-enabled', 'compact-mode', 'show-tooltips', 
-            'notifications-enabled', 'performance-mode', 'auto-save', 
-            'auto-update', 'debug-mode'
+            'notifications-enabled', 'performance-mode', 'auto-save', 'auto-update'
         ];
         
         checkboxes.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 element.addEventListener('change', (e) => {
-                    const settingKey = id.replace('-enabled', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                    let settingKey = id.replace('-enabled', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase());
                     this.setSetting(settingKey, e.target.checked);
                 });
             }
         });
         
-        // Предпросмотр тем
-        document.querySelectorAll('.theme-preview').forEach(preview => {
-            preview.addEventListener('click', (e) => {
-                const theme = e.currentTarget.dataset.theme;
-                this.setSetting('theme', theme);
-                this.updateThemePreview(theme);
+        const passwordInput = document.getElementById('developer-password');
+        if (passwordInput) {
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    this.unlockDeveloper();
+                }
             });
-        });
+        }
     }
     
-    // Переключение раздела
     switchSection(section) {
         this.currentSection = section;
         
-        // Обновляем активную вкладку
         document.querySelectorAll('.settings-tab').forEach(tab => {
             tab.classList.remove('active');
         });
-        document.querySelector(`[data-section="${section}"]`).classList.add('active');
         
-        // Обновляем контент
+        const targetTab = document.querySelector(`[data-section="${section}"]`);
+        if (targetTab && !targetTab.classList.contains('developer-locked')) {
+            targetTab.classList.add('active');
+        }
+        
         const content = document.querySelector('.settings-content');
         if (content) {
             content.innerHTML = this.createSettingsContent();
@@ -481,7 +438,42 @@ class Settings {
         }
     }
     
-    // Методы управления настройками
+    unlockDeveloper() {
+        const passwordInput = document.getElementById('developer-password');
+        if (passwordInput && passwordInput.value === this.developerPassword) {
+            this.isDeveloperUnlocked = true;
+            
+            const sidebar = document.querySelector('.settings-sidebar');
+            if (sidebar) {
+                sidebar.innerHTML = this.createSettingsSidebar();
+            }
+            
+            this.switchSection('developer');
+            
+            window.notifications?.success('Доступ разработчика получен');
+            if (window.soundSystem) {
+                window.soundSystem.playSuccess();
+            }
+        } else {
+            window.notifications?.error('Неверный пароль');
+            if (window.soundSystem) {
+                window.soundSystem.playError();
+            }
+        }
+    }
+    
+    lockDeveloper() {
+        this.isDeveloperUnlocked = false;
+        this.switchSection('sound');
+        
+        const sidebar = document.querySelector('.settings-sidebar');
+        if (sidebar) {
+            sidebar.innerHTML = this.createSettingsSidebar();
+        }
+        
+        window.notifications?.info('Доступ разработчика заблокирован');
+    }
+    
     setSetting(key, value) {
         if (this.settings.hasOwnProperty(key)) {
             this.settings[key] = value;
@@ -495,71 +487,6 @@ class Settings {
         return this.settings[key];
     }
     
-    // Сброс всех настроек
-    resetAllSettings() {
-        if (confirm('Вы уверены, что хотите сбросить все настройки?')) {
-            localStorage.removeItem('rkm_settings');
-            localStorage.removeItem('rkm_sound_settings');
-            window.location.reload();
-        }
-    }
-    
-    // Экспорт настроек
-    exportSettings() {
-        const data = {
-            settings: this.settings,
-            soundSettings: window.soundSettings ? window.soundSettings.settings : {},
-            timestamp: Date.now(),
-            version: '1.0'
-        };
-        
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'rkm-settings.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        window.notifications?.success('Настройки экспортированы');
-    }
-    
-    // Импорт настроек
-    importSettings() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        
-                        if (data.settings) {
-                            this.settings = { ...this.settings, ...data.settings };
-                            this.saveSettings();
-                        }
-                        
-                        if (data.soundSettings && window.soundSettings) {
-                            window.soundSettings.settings = { ...window.soundSettings.settings, ...data.soundSettings };
-                            window.soundSettings.saveSettings();
-                        }
-                        
-                        window.notifications?.success('Настройки импортированы');
-                        setTimeout(() => window.location.reload(), 1000);
-                    } catch (error) {
-                        window.notifications?.error('Ошибка импорта настроек');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        };
-        input.click();
-    }
-    
-    // Очистка всех данных
     clearAllData() {
         if (confirm('Это удалит ВСЕ данные приложения. Продолжить?')) {
             localStorage.clear();
@@ -568,7 +495,6 @@ class Settings {
         }
     }
     
-    // Информация о системе
     showSystemInfo() {
         const info = {
             userAgent: navigator.userAgent,

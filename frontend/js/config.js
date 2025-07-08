@@ -4,11 +4,9 @@ window.RkMConfig = {
     github: {
         owner: 'AmKilopa',
         repo: 'RkM',
-        // Полный путь для API
         get apiUrl() {
             return `https://api.github.com/repos/${this.owner}/${this.repo}`;
         },
-        // Ссылки на issues
         issues: {
             home: 'HPR',
             inventory: 'ICR', 
@@ -16,7 +14,6 @@ window.RkMConfig = {
             substitution: 'SSR',
             helpBackend: 'HBR'
         },
-        // Генерация ссылки на issue
         getIssueUrl(type) {
             const title = this.issues[type] || 'BUG';
             return `https://github.com/${this.owner}/${this.repo}/issues/new?title=${title}`;
@@ -29,7 +26,6 @@ window.RkMConfig = {
             local: 'http://localhost:3000/api',
             production: 'https://rkm-9vui.onrender.com/api'
         },
-        // Определение текущего URL
         get backendUrl() {
             if (window.location.protocol === 'file:') {
                 return this.backend.local;
@@ -46,19 +42,19 @@ window.RkMConfig = {
     
     // Интервалы проверок (в миллисекундах)
     intervals: {
-        updateCheck: 30000,    // 30 секунд
-        backendCheck: 10000,   // 10 секунд
-        netlifyCheck: 15000,   // 15 секунд
-        offlineRetry: 10000    // 10 секунд
+        updateCheck: 30000,
+        backendCheck: 10000,
+        netlifyCheck: 15000,
+        offlineRetry: 10000
     },
     
     // Настройки уведомлений
     notifications: {
         durations: {
-            success: 4000,
-            error: 6000,
-            info: 5000,
-            warning: 5000
+            success: 3000,
+            error: 5000,
+            info: 3000,
+            warning: 4000
         }
     },
     
@@ -75,7 +71,7 @@ window.RkMConfig = {
     // Настройки звука
     audio: {
         enabled: true,
-        masterVolume: 1.0,
+        masterVolume: 0.6,
         defaultSoundPack: 'default',
         categories: {
             button: true,
@@ -89,84 +85,68 @@ window.RkMConfig = {
     
     // Настройки интерфейса
     ui: {
-        theme: 'dark',
-        language: 'ru',
         animations: true,
         compactMode: false,
         showTooltips: true,
-        autoSave: true,
-        debugMode: false
+        autoSave: true
     },
     
     // Фичи приложения
     features: {
         inventory: {
             enabled: false,
-            inDevelopment: true,
-            betaAccess: false
+            inDevelopment: true
         },
         friendError: {
             enabled: false,
-            inDevelopment: true,
-            betaAccess: false
+            inDevelopment: true
         },
         substitution: {
             enabled: true,
-            inDevelopment: false,
-            betaAccess: false
+            inDevelopment: false
         },
         settings: {
             enabled: true,
-            inDevelopment: false,
-            betaAccess: false
+            inDevelopment: false
         },
         changelog: {
             enabled: true,
-            inDevelopment: false,
-            betaAccess: false
+            inDevelopment: false
         },
         bugReport: {
             enabled: true,
-            inDevelopment: false,
-            betaAccess: false
+            inDevelopment: false
         }
     },
     
     // Утилиты конфигурации
-    utils: {
-        // Получить значение по пути
-        get(path, defaultValue = null) {
-            return path.split('.').reduce((obj, key) => {
-                return obj && obj[key] !== undefined ? obj[key] : defaultValue;
-            }, this);
-        },
-        
-        // Установить значение по пути
-        set(path, value) {
-            const keys = path.split('.');
-            const lastKey = keys.pop();
-            const target = keys.reduce((obj, key) => {
-                if (!obj[key]) obj[key] = {};
-                return obj[key];
-            }, this);
-            target[lastKey] = value;
-        },
-        
-        // Проверить, включена ли функция
-        isFeatureEnabled(featureName) {
-            return this.get(`features.${featureName}.enabled`, false);
-        },
-        
-        // Проверить режим разработки
-        isDevelopment() {
-            return this.get('app.environment') === 'development';
-        },
-        
-        // Получить URL API
-        getApiUrl(endpoint) {
-            const baseUrl = this.get('api.backendUrl');
-            return baseUrl + endpoint;
-        }
+    get(path, defaultValue = null) {
+        return path.split('.').reduce((obj, key) => {
+            return obj && obj[key] !== undefined ? obj[key] : defaultValue;
+        }, this);
+    },
+    
+    set(path, value) {
+        const keys = path.split('.');
+        const lastKey = keys.pop();
+        const target = keys.reduce((obj, key) => {
+            if (!obj[key]) obj[key] = {};
+            return obj[key];
+        }, this);
+        target[lastKey] = value;
+    },
+    
+    isFeatureEnabled(featureName) {
+        return this.get(`features.${featureName}.enabled`, false);
+    },
+    
+    isDevelopment() {
+        return this.get('app.environment') === 'development';
+    },
+    
+    getApiUrl(endpoint) {
+        const baseUrl = this.get('api.backendUrl');
+        return baseUrl + endpoint;
     }
 };
 
@@ -177,13 +157,11 @@ class ApiClient {
     }
     
     getBackendUrl() {
-        // Используем конфигурацию
         const config = window.RkMConfig?.api;
         if (config) {
             return config.backendUrl;
         }
         
-        // Fallback
         if (window.location.protocol === 'file:') {
             return 'http://localhost:3000/api';
         }
@@ -193,7 +171,6 @@ class ApiClient {
             return 'http://localhost:3000/api';
         }
         
-        // Production URL
         return 'https://rkm-9vui.onrender.com/api';
     }
     
@@ -222,7 +199,6 @@ class ApiClient {
         }
     }
     
-    // === ПРОВЕРКА ОБНОВЛЕНИЙ ЧЕРЕЗ BACKEND ===
     async checkForUpdates() {
         return this.request('/updates/check', { method: 'GET' });
     }
@@ -231,7 +207,6 @@ class ApiClient {
         return this.request('/updates/latest-commit', { method: 'GET' });
     }
     
-    // === ТЕСТОВЫЙ МЕТОД ===
     async testConnection() {
         try {
             const response = await fetch(`${this.baseUrl}/status`, {
@@ -254,7 +229,6 @@ class ApiClient {
         }
     }
     
-    // === МЕТОДЫ ДЛЯ ПОДМЕНЫ ===
     async authenticateSubstitution(password) {
         return this.request('/substitution/auth', {
             method: 'POST',
@@ -273,7 +247,6 @@ class ApiClient {
         });
     }
     
-    // === МЕТОДЫ ДЛЯ ИНВЕНТАРЯ ===
     async checkInventory(steamId) {
         return this.request('/inventory/check', {
             method: 'POST',
@@ -288,7 +261,6 @@ class ApiClient {
         });
     }
     
-    // === МЕТОДЫ ДЛЯ FRIEND ERROR ===
     async generateFriendError(steamId) {
         return this.request('/friend-error/generate', {
             method: 'POST',
@@ -376,26 +348,14 @@ class ModalSystem {
     }
 }
 
-// Применяем утилиты к объекту конфигурации
-Object.assign(window.RkMConfig, window.RkMConfig.utils);
-
-// Применение базовых настроек
-document.documentElement.setAttribute('data-theme', window.RkMConfig.ui.theme);
-document.documentElement.setAttribute('lang', window.RkMConfig.ui.language);
-
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', async () => {
-    // Создаем глобальные экземпляры
     window.api = new ApiClient();
     window.authSystem = new AuthSystem();
     window.modals = new ModalSystem();
     
-    console.log('✅ Конфигурация RkM загружена успешно');
-    console.log(`📱 ${window.RkMConfig.app.name} v${window.RkMConfig.app.version}`);
-    
-    // Проверяем соединение (тихо)
-    const connected = await window.api.testConnection();
+    // Тихая проверка соединения
+    await window.api.testConnection();
 });
 
-// Экспорт для глобального доступа
 window.config = window.RkMConfig;
