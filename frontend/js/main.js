@@ -13,9 +13,7 @@ class App {
             return;
         }
         
-        // Показываем уведомление об обновлении если было
         this.showUpdateNotification();
-        
         this.clearApiCache();
         this.setupEventListeners();
         this.updateBugReportLink();
@@ -29,7 +27,6 @@ class App {
             if (updateInfo) {
                 localStorage.removeItem('rkm_update_detected');
                 
-                // Ждем загрузки системы уведомлений
                 setTimeout(() => {
                     if (window.notifications) {
                         window.notifications.success('✅ Сайт успешно обновлён!', 5000);
@@ -81,7 +78,6 @@ class App {
             this.showChangelog();
         });
 
-        // Обработчик для кнопки настроек
         document.getElementById('settings-btn')?.addEventListener('click', () => {
             this.showSettings();
         });
@@ -166,9 +162,7 @@ class App {
         }
     }
 
-    // === МЕТОДЫ ДЛЯ НАСТРОЕК ===
     showSettings() {
-        // Проверяем что окно уже не открыто
         if (document.querySelector('.settings-modal')) {
             return;
         }
@@ -267,12 +261,7 @@ class App {
             const result = await window.api.checkForUpdates();
             
             if (result && result.success && result.hasUpdate) {
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('ru-RU');
-                const timeStr = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
-                const commitShort = result.latestCommit.substring(0, 7);
-                
-                console.log(`🆕 Обновление ${dateStr} / ${timeStr} \\ #${commitShort}`);
+                console.log('☑️ Обновление получено');
                 
                 try {
                     localStorage.setItem('rkm_update_detected', JSON.stringify({
@@ -315,12 +304,8 @@ class App {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                },
-                cache: 'no-store'
+                    'Accept': 'application/vnd.github.v3+json'
+                }
             });
             
             if (response.status === 403 || response.status === 404 || !response.ok) {
@@ -340,7 +325,8 @@ class App {
                 }
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    // Найдено обновление!
+                    console.log('☑️ Обновление получено');
+                    
                     try {
                         localStorage.setItem('rkm_update_detected', JSON.stringify({
                             timestamp: new Date().toISOString(),
@@ -358,7 +344,6 @@ class App {
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
-                    // Первый запуск - сохраняем текущий коммит
                     try {
                         localStorage.setItem('rkm_last_commit', latestCommit.sha);
                     } catch (e) {
@@ -400,32 +385,352 @@ class App {
             <div id="notifications-container" class="notifications-container"></div>
             <div id="modal-overlay" class="modal-overlay"></div>
             
-            <div class="status-page update-page">
-                <div class="main-container">
-                    <div class="status-icon rotating">🔄</div>
-                    <h1 class="main-title">Обновление сайта</h1>
-                    <p class="update-message">Применяем последние изменения...</p>
+            <div class="update-page">
+                <div class="update-background">
+                    <div class="animated-circle"></div>
+                    <div class="floating-particles"></div>
+                </div>
+                
+                <div class="update-container">
+                    <div class="update-icon-wrapper">
+                        <div class="rotating-ring"></div>
+                        <div class="update-icon">🔄</div>
+                    </div>
                     
-                    <div class="commit-info">
-                        <h3>🆕 Последний коммит:</h3>
-                        <div class="commit-message">${commitMessage}</div>
-                        <div class="commit-details">
-                            <span class="commit-author">👤 ${authorName}</span>
-                            <span class="commit-date">📅 ${new Date(authorDate).toLocaleString('ru')}</span>
+                    <h1 class="update-title">Обновление сайта</h1>
+                    <p class="update-subtitle">Применяем последние изменения...</p>
+                    
+                    <div class="commit-card">
+                        <div class="commit-header">
+                            <div class="commit-badge">#${shortSha}</div>
+                            <div class="commit-time">${new Date(authorDate).toLocaleString('ru')}</div>
                         </div>
-                        <div class="commit-sha">#${shortSha}</div>
+                        
+                        <div class="commit-content">
+                            <div class="commit-message">${commitMessage}</div>
+                            
+                            <div class="commit-author">
+                                <span class="author-icon">👤</span>
+                                <span class="author-name">${authorName}</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="loading-section">
-                        <div class="loading-spinner"></div>
-                        <p class="loading-text">Подготовка к перезагрузке...</p>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="progress-text">Подготовка к перезагрузке...</div>
                     </div>
                     
-                    <div class="auto-refresh">
-                        Сайт автоматически перезагрузится через <span id="countdown">15</span> секунд
+                    <div class="countdown-wrapper">
+                        <span class="countdown-text">Автоматическая перезагрузка через</span>
+                        <span class="countdown-number" id="countdown">15</span>
+                        <span class="countdown-unit">секунд</span>
                     </div>
                 </div>
             </div>
+            
+            <style>
+                .update-page {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0d1421 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    overflow: hidden;
+                    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+                }
+                
+                .update-background {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                    z-index: -1;
+                }
+                
+                .animated-circle {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 600px;
+                    height: 600px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle at center, 
+                        rgba(0, 123, 255, 0.15) 0%, 
+                        rgba(40, 167, 69, 0.1) 40%, 
+                        transparent 70%);
+                    animation: pulseGlow 4s ease-in-out infinite;
+                }
+                
+                @keyframes pulseGlow {
+                    0%, 100% { 
+                        transform: translate(-50%, -50%) scale(1); 
+                        opacity: 0.6; 
+                    }
+                    50% { 
+                        transform: translate(-50%, -50%) scale(1.1); 
+                        opacity: 1; 
+                    }
+                }
+                
+                .floating-particles {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    background: 
+                        radial-gradient(2px 2px at 20px 30px, rgba(0, 123, 255, 0.3), transparent),
+                        radial-gradient(2px 2px at 40px 70px, rgba(40, 167, 69, 0.3), transparent),
+                        radial-gradient(1px 1px at 90px 40px, rgba(255, 193, 7, 0.3), transparent),
+                        radial-gradient(1px 1px at 130px 80px, rgba(220, 53, 69, 0.3), transparent);
+                    background-repeat: repeat;
+                    background-size: 200px 200px;
+                    animation: float 20s linear infinite;
+                }
+                
+                @keyframes float {
+                    from { transform: translate3d(0, 0, 0); }
+                    to { transform: translate3d(-200px, -200px, 0); }
+                }
+                
+                .update-container {
+                    text-align: center;
+                    max-width: 600px;
+                    padding: 3rem;
+                    background: rgba(26, 26, 26, 0.8);
+                    border-radius: 24px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(20px);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                }
+                
+                .update-icon-wrapper {
+                    position: relative;
+                    width: 120px;
+                    height: 120px;
+                    margin: 0 auto 2rem;
+                }
+                
+                .rotating-ring {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: 3px solid transparent;
+                    border-top: 3px solid #007bff;
+                    border-right: 3px solid #28a745;
+                    border-radius: 50%;
+                    animation: spin 2s linear infinite;
+                }
+                
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                
+                .update-icon {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 3rem;
+                    animation: bounce 1.5s ease-in-out infinite;
+                }
+                
+                @keyframes bounce {
+                    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+                    50% { transform: translate(-50%, -50%) scale(1.1); }
+                }
+                
+                .update-title {
+                    font-size: 2.5rem;
+                    font-weight: 300;
+                    color: #ffffff;
+                    margin-bottom: 1rem;
+                    background: linear-gradient(45deg, #007bff, #28a745);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+                
+                .update-subtitle {
+                    font-size: 1.2rem;
+                    color: #ccc;
+                    margin-bottom: 3rem;
+                }
+                
+                .commit-card {
+                    background: rgba(42, 42, 42, 0.8);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    margin: 2rem 0;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    text-align: left;
+                }
+                
+                .commit-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                    flex-wrap: wrap;
+                    gap: 1rem;
+                }
+                
+                .commit-badge {
+                    background: linear-gradient(45deg, #ffc107, #e0a800);
+                    color: #000;
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-family: 'Courier New', monospace;
+                    font-weight: bold;
+                    font-size: 0.9rem;
+                }
+                
+                .commit-time {
+                    color: #888;
+                    font-size: 0.9rem;
+                }
+                
+                .commit-content {
+                    text-align: left;
+                }
+                
+                .commit-message {
+                    color: #ffffff;
+                    font-size: 1.1rem;
+                    line-height: 1.5;
+                    margin-bottom: 1rem;
+                    word-wrap: break-word;
+                }
+                
+                .commit-author {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: #ccc;
+                    font-size: 0.95rem;
+                }
+                
+                .author-icon {
+                    font-size: 1.1rem;
+                }
+                
+                .progress-section {
+                    margin: 2rem 0;
+                }
+                
+                .progress-bar {
+                    width: 100%;
+                    height: 6px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 3px;
+                    overflow: hidden;
+                    margin-bottom: 1rem;
+                }
+                
+                .progress-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #007bff, #28a745);
+                    border-radius: 3px;
+                    animation: fillProgress 15s linear;
+                }
+                
+                @keyframes fillProgress {
+                    from { width: 0%; }
+                    to { width: 100%; }
+                }
+                
+                .progress-text {
+                    color: #ccc;
+                    font-size: 1rem;
+                }
+                
+                .countdown-wrapper {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    font-size: 1.1rem;
+                    color: #ccc;
+                    flex-wrap: wrap;
+                }
+                
+                .countdown-number {
+                    background: linear-gradient(45deg, #007bff, #28a745);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 12px;
+                    font-weight: bold;
+                    font-size: 1.3rem;
+                    min-width: 50px;
+                    text-align: center;
+                    animation: countdownPulse 1s ease-in-out infinite;
+                }
+                
+                @keyframes countdownPulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
+                }
+                
+                @media (max-width: 768px) {
+                    .update-container {
+                        margin: 1rem;
+                        padding: 2rem;
+                    }
+                    
+                    .update-title {
+                        font-size: 2rem;
+                    }
+                    
+                    .update-icon-wrapper {
+                        width: 100px;
+                        height: 100px;
+                    }
+                    
+                    .update-icon {
+                        font-size: 2.5rem;
+                    }
+                    
+                    .commit-card {
+                        padding: 1.5rem;
+                    }
+                    
+                    .commit-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+                    
+                    .countdown-wrapper {
+                        font-size: 1rem;
+                        text-align: center;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .update-container {
+                        padding: 1.5rem;
+                    }
+                    
+                    .update-title {
+                        font-size: 1.8rem;
+                    }
+                    
+                    .commit-message {
+                        font-size: 1rem;
+                    }
+                }
+            </style>
         `;
         
         this.reinitializeModules();
@@ -454,18 +759,127 @@ class App {
             const connected = await window.api.testConnection();
             if (!connected) {
                 console.log('🔴 Backend недоступен');
-                this.showOfflinePage();
-            } else {
-                console.log('🟢 Backend доступен');
+                await this.analyzeBackendIssue();
             }
         } catch (error) {
             console.log('🔴 Backend недоступен');
-            this.showOfflinePage();
+            await this.analyzeBackendIssue();
         }
     }
     
-    // === ИСПРАВЛЕННАЯ СТРАНИЦА ОШИБКИ СЕРВЕРА ===
-    showOfflinePage() {
+    async analyzeBackendIssue() {
+        try {
+            const recentCommit = await this.checkRecentCommits();
+            
+            if (recentCommit) {
+                this.showBackendUpdatingPage(recentCommit);
+            } else {
+                this.showBackendOfflinePage();
+            }
+        } catch (error) {
+            this.showBackendOfflinePage();
+        }
+    }
+    
+    async checkRecentCommits() {
+        const config = window.RkMConfig?.github;
+        if (!config) return null;
+        
+        try {
+            const response = await fetch(`${config.apiUrl}/commits?per_page=10`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!response.ok) return null;
+            
+            const commits = await response.json();
+            const now = new Date();
+            const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+            
+            for (const commit of commits) {
+                const commitDate = new Date(commit.commit.author.date);
+                if (commitDate > fiveMinutesAgo) {
+                    return commit;
+                }
+            }
+            
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
+    
+    showBackendUpdatingPage(commit) {
+        const config = window.RkMConfig?.github;
+        const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
+        
+        const commitMessage = commit.commit.message;
+        const authorName = commit.commit.author.name;
+        const commitDate = new Date(commit.commit.author.date).toLocaleString('ru');
+        const shortSha = commit.sha.substring(0, 7);
+        
+        document.body.innerHTML = `
+            <div id="notifications-container" class="notifications-container"></div>
+            <div id="modal-overlay" class="modal-overlay"></div>
+            
+            <div class="offline-page">
+                <div class="offline-container">
+                    <div class="status-icon updating">
+                        <div class="icon-ring"></div>
+                        <span class="icon-emoji">🔄</span>
+                    </div>
+                    
+                    <h1 class="offline-title">Сервер обновляется</h1>
+                    <p class="offline-subtitle">Backend применяет последние изменения</p>
+                    
+                    <div class="info-card">
+                        <div class="card-header">
+                            <span class="header-icon">🆕</span>
+                            <span class="header-text">Последний коммит:</span>
+                        </div>
+                        
+                        <div class="commit-info">
+                            <div class="commit-badge">#${shortSha}</div>
+                            <div class="commit-message">${commitMessage}</div>
+                            <div class="commit-details">
+                                <span class="detail-item">👤 ${authorName}</span>
+                                <span class="detail-item">📅 ${commitDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-icon">⏱️</span>
+                            <span class="status-text">Ожидаемое время: 2-5 минут</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-icon">🔄</span>
+                            <span class="status-text">Автопроверка каждые 10 секунд</span>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button onclick="window.location.reload()" class="action-btn primary">
+                            🔄 Проверить снова
+                        </button>
+                        <button onclick="window.open('${helpUrl}', '_blank')" class="action-btn secondary">
+                            📝 Сообщить о проблеме
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.addOfflineStyles();
+        this.reinitializeModules();
+        this.startBackendRetryLoop();
+    }
+    
+    showBackendOfflinePage() {
         const config = window.RkMConfig?.github;
         const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
         
@@ -473,95 +887,358 @@ class App {
             <div id="notifications-container" class="notifications-container"></div>
             <div id="modal-overlay" class="modal-overlay"></div>
             
-            <div class="page active" id="offline-page">
-                <div class="main-container">
-                    <div class="main-title">
-                        <span class="lightning-icon" style="animation: pulse 2s ease-in-out infinite; color: #dc3545;">📡</span>
-                        Сервер недоступен
+            <div class="offline-page">
+                <div class="offline-container">
+                    <div class="status-icon offline">
+                        <div class="icon-ring error"></div>
+                        <span class="icon-emoji">📡</span>
                     </div>
                     
-                    <div class="buttons-container">
-                        <div class="commit-info" style="margin-bottom: 2rem;">
-                            <h3>⚠️ Информация о проблеме</h3>
-                            <div class="commit-message">
-                                Backend сервер временно не отвечает на запросы
-                            </div>
-                            <div class="commit-details" style="margin-top: 1rem;">
-                                <span class="commit-author">🕒 Ожидаемое время восстановления: до 5 минут</span>
-                            </div>
-                            <div class="commit-date" style="margin-top: 0.5rem;">
-                                📊 Статус: Автоматическая проверка каждые 10 секунд
-                            </div>
+                    <h1 class="offline-title error">Сервер недоступен</h1>
+                    <p class="offline-subtitle">Backend временно отключен</p>
+                    
+                    <div class="info-card error">
+                        <div class="card-header">
+                            <span class="header-icon">⚠️</span>
+                            <span class="header-text">Информация о проблеме</span>
                         </div>
                         
-                        <button onclick="window.location.reload()" class="main-btn" style="background: linear-gradient(145deg, var(--accent-green), #1e7e34);">
-                            🔄 Попробовать снова
-                            <div class="status">Перезагрузить страницу</div>
-                        </button>
-                        
-                        <button onclick="window.open('${helpUrl}', '_blank')" class="main-btn" style="background: linear-gradient(145deg, var(--accent-red), #c82333);">
-                            📝 Сообщить о проблеме
-                            <div class="status">Создать заявку в GitHub</div>
-                        </button>
-                        
-                        <div class="main-btn disabled" style="margin-top: 1rem; background: linear-gradient(145deg, #6c757d, #5a6268);">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
-                                <div class="status-indicator" style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <div class="pulse-dot" style="width: 12px; height: 12px; background: #dc3545; border-radius: 50%; animation: pulse 1.5s ease-in-out infinite;"></div>
-                                    <span style="color: var(--text-secondary);">Соединение отсутствует</span>
+                        <div class="error-content">
+                            <p class="error-description">
+                                Backend сервер не отвечает на запросы. Возможные причины: 
+                                техническое обслуживание, перезагрузка сервера или временные неполадки.
+                            </p>
+                            
+                            <div class="error-details">
+                                <div class="detail-row">
+                                    <span class="detail-icon">🔍</span>
+                                    <span class="detail-text">Автопроверка каждые 10 секунд</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-icon">⏰</span>
+                                    <span class="detail-text">Обычно восстанавливается в течение 5-10 минут</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="action-buttons">
+                        <button onclick="window.location.reload()" class="action-btn primary">
+                            🔄 Попробовать снова
+                        </button>
+                        <button onclick="window.open('${helpUrl}', '_blank')" class="action-btn secondary">
+                            📝 Сообщить о проблеме
+                        </button>
+                    </div>
+                    
+                    <div class="connection-status">
+                        <div class="status-indicator">
+                            <div class="status-dot"></div>
+                            <span class="status-label">Соединение отсутствует</span>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Фоновые элементы для красоты -->
-                <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: radial-gradient(circle, rgba(220, 53, 69, 0.1), transparent); border-radius: 50%; z-index: -1; animation: pulse 3s ease-in-out infinite;"></div>
             </div>
-            
-            <style>
-                @keyframes pulse {
-                    0%, 100% { opacity: 0.6; transform: scale(1); }
-                    50% { opacity: 1; transform: scale(1.05); }
-                }
-                
-                .pulse-dot {
-                    animation: pulse 1.5s ease-in-out infinite;
-                }
-                
-                .status-indicator {
-                    font-size: 0.9rem;
-                    color: var(--text-muted);
-                }
-                
-                #offline-page .main-title {
-                    color: var(--accent-red);
-                    margin-bottom: 3rem;
-                }
-                
-                #offline-page .commit-info {
-                    text-align: left;
-                }
-                
-                #offline-page .commit-message {
-                    color: var(--text-primary);
-                    font-size: 1.1rem;
-                    margin-bottom: 1rem;
-                }
-                
-                #offline-page .commit-details {
-                    color: var(--text-secondary);
-                }
-                
-                #offline-page .commit-date {
-                    color: var(--text-muted);
-                    font-size: 0.9rem;
-                }
-            </style>
         `;
         
+        this.addOfflineStyles();
         this.reinitializeModules();
-        
+        this.startBackendRetryLoop();
+    }
+    
+    addOfflineStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .offline-page {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #1a0d0d 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            }
+            
+            .offline-container {
+                text-align: center;
+                max-width: 600px;
+                padding: 3rem;
+                background: rgba(26, 26, 26, 0.9);
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            }
+            
+            .status-icon {
+                position: relative;
+                width: 100px;
+                height: 100px;
+                margin: 0 auto 2rem;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .status-icon.updating {
+                background: rgba(0, 123, 255, 0.1);
+            }
+            
+            .status-icon.offline {
+                background: rgba(220, 53, 69, 0.1);
+            }
+            
+            .icon-ring {
+                position: absolute;
+                top: -3px;
+                left: -3px;
+                width: calc(100% + 6px);
+                height: calc(100% + 6px);
+                border: 3px solid transparent;
+                border-radius: 50%;
+                border-top: 3px solid #007bff;
+                animation: spin 2s linear infinite;
+            }
+            
+            .icon-ring.error {
+                border-top: 3px solid #dc3545;
+                animation: none;
+            }
+            
+            .icon-emoji {
+                font-size: 2.5rem;
+                z-index: 1;
+            }
+            
+            .offline-title {
+                font-size: 2.2rem;
+                font-weight: 300;
+                color: #007bff;
+                margin-bottom: 1rem;
+            }
+            
+            .offline-title.error {
+                color: #dc3545;
+            }
+            
+            .offline-subtitle {
+                font-size: 1.1rem;
+                color: #ccc;
+                margin-bottom: 2.5rem;
+            }
+            
+            .info-card {
+                background: rgba(42, 42, 42, 0.8);
+                border-radius: 16px;
+                padding: 2rem;
+                margin: 2rem 0;
+                border: 1px solid rgba(0, 123, 255, 0.2);
+                text-align: left;
+            }
+            
+            .info-card.error {
+                border-color: rgba(220, 53, 69, 0.2);
+            }
+            
+            .card-header {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-bottom: 1.5rem;
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #fff;
+            }
+            
+            .header-icon {
+                font-size: 1.3rem;
+            }
+            
+            .commit-info .commit-badge {
+                background: linear-gradient(45deg, #ffc107, #e0a800);
+                color: #000;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-family: 'Courier New', monospace;
+                font-weight: bold;
+                font-size: 0.85rem;
+                margin-bottom: 1rem;
+                display: inline-block;
+            }
+            
+            .commit-message {
+                color: #fff;
+                font-size: 1rem;
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+            
+            .commit-details {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .detail-item {
+                color: #ccc;
+                font-size: 0.9rem;
+            }
+            
+            .error-content .error-description {
+                color: #ccc;
+                line-height: 1.6;
+                margin-bottom: 1.5rem;
+            }
+            
+            .error-details {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .detail-row {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #aaa;
+                font-size: 0.9rem;
+            }
+            
+            .detail-icon {
+                font-size: 1rem;
+            }
+            
+            .status-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                margin: 2rem 0;
+            }
+            
+            .status-item {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 1rem;
+                border-radius: 12px;
+                text-align: center;
+            }
+            
+            .status-item .status-icon {
+                display: block;
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .status-item .status-text {
+                color: #ccc;
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+            
+            .action-buttons {
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                margin-top: 2rem;
+            }
+            
+            .action-btn {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 12px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                min-width: 180px;
+            }
+            
+            .action-btn.primary {
+                background: linear-gradient(45deg, #007bff, #0056b3);
+                color: white;
+            }
+            
+            .action-btn.primary:hover {
+                background: linear-gradient(45deg, #0056b3, #004085);
+                transform: translateY(-2px);
+            }
+            
+            .action-btn.secondary {
+                background: rgba(108, 117, 125, 0.2);
+                color: #ccc;
+                border: 1px solid rgba(108, 117, 125, 0.3);
+            }
+            
+            .action-btn.secondary:hover {
+                background: rgba(108, 117, 125, 0.3);
+                color: #fff;
+            }
+            
+            .connection-status {
+                margin-top: 2rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .status-indicator {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                color: #888;
+                font-size: 0.9rem;
+            }
+            
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                background: #dc3545;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+            
+            @media (max-width: 768px) {
+                .offline-container {
+                    margin: 1rem;
+                    padding: 2rem;
+                }
+                
+                .status-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .action-buttons {
+                    flex-direction: column;
+                }
+                
+                .action-btn {
+                    width: 100%;
+                }
+                
+                .commit-details {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    startBackendRetryLoop() {
         const retryInterval = window.RkMConfig?.intervals?.offlineRetry || 10000;
         setInterval(async () => {
             try {
@@ -588,56 +1265,6 @@ class App {
                 window.buttonSounds.refreshBindings();
             }
         }, 100);
-    }
-    
-    // Тест обновления для разработчиков
-    testUpdateSystem() {
-        // Сохраняем фейковое обновление
-        try {
-            localStorage.setItem('rkm_update_detected', JSON.stringify({
-                timestamp: new Date().toISOString(),
-                commit: 'test123456',
-                message: 'Тестовое обновление системы'
-            }));
-        } catch (e) {
-            sessionStorage.setItem('rkm_update_detected', JSON.stringify({
-                timestamp: new Date().toISOString(),
-                commit: 'test123456',
-                message: 'Тестовое обновление системы'
-            }));
-        }
-        
-        // Имитируем страницу обновления
-        const fakeCommit = {
-            sha: 'test123456',
-            commit: {
-                message: 'Тестовое обновление системы',
-                author: {
-                    name: 'Test Developer',
-                    date: new Date().toISOString()
-                }
-            }
-        };
-        
-        this.showUpdatePage(fakeCommit);
-    }
-    
-    // Тест уведомлений
-    testNotifications() {
-        if (window.notifications) {
-            window.notifications.success('✅ Тест успешного уведомления');
-            setTimeout(() => {
-                window.notifications.info('ℹ️ Тест информационного уведомления');
-            }, 1000);
-            setTimeout(() => {
-                window.notifications.warning('⚠️ Тест предупреждения');
-            }, 2000);
-            setTimeout(() => {
-                window.notifications.error('❌ Тест ошибки');
-            }, 3000);
-        } else {
-            alert('Система уведомлений не загружена!');
-        }
     }
 }
 
