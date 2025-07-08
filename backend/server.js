@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // CORS настройки
 app.use(cors({
     origin: [
-        'https://rkmhelper.netlify.app',
+        'https://rkmhelper.vercel.app',
         'https://rkm-9vui.onrender.com',
         'http://localhost:3000',
         'http://localhost:8080',
