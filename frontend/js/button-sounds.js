@@ -1,4 +1,4 @@
-// === ЗВУКИ ДЛЯ КНОПОК ===
+// === ЗВУКИ ДЛЯ КНОПОК (ОЧИЩЕННАЯ ВЕРСИЯ) ===
 class ButtonSounds {
     constructor() {
         this.init();
@@ -40,8 +40,6 @@ class ButtonSounds {
         button.setAttribute('data-sound-added', 'true');
         
         // Добавляем обработчик клика
-        const originalClick = button.onclick;
-        
         button.addEventListener('click', (e) => {
             // Воспроизводим звук
             this.playButtonSound(button);

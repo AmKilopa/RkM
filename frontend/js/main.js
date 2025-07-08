@@ -8,18 +8,13 @@ class App {
     }
     
     init() {
-        console.log('🔧 Инициализация приложения');
-        
         // Ждем инициализации API клиента
         if (!window.api) {
-            console.log('⏳ Ожидаем инициализации API клиента...');
             setTimeout(() => this.init(), 100);
             return;
         }
         
-        // Очищаем кеш браузера для GitHub API
         this.clearApiCache();
-        
         this.setupEventListeners();
         this.updateBugReportLink();
         this.startUpdateMonitoring();
@@ -38,10 +33,8 @@ class App {
                 }
             }
             keysToRemove.forEach(key => sessionStorage.removeItem(key));
-            
-            console.log('🧹 Кеш API очищен');
         } catch (e) {
-            console.log('⚠️ Не удалось очистить кеш:', e.message);
+            // Игнорируем ошибки
         }
     }
     
@@ -118,51 +111,35 @@ class App {
         }
     }
     
-    // В функции startUpdateMonitoring() изменить интервал:
-
     startUpdateMonitoring() {
-        console.log('🔧 Инициализация мониторинга обновлений');
-        console.log('🔗 Backend URL:', window.api?.baseUrl || 'не определен');
-        
         try {
             const oldCommit = localStorage.getItem('rkm_last_commit');
-            console.log('🔄 Запуск мониторинга через backend, последний коммит:', oldCommit ? oldCommit.substring(0, 7) : 'none');
         } catch (e) {
-            console.log('⚠️ Проблемы с localStorage, используем временное хранение');
+            // Игнорируем ошибки localStorage
         }
         
-        // ИЗМЕНЕНО: с 120000 (2 мин) на 10000 (10 сек)
+        // Проверка каждые 10 секунд для быстрых webhook обновлений
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 10000); // 10 секунд для быстрых webhook обновлений
+        }, 10000);
         
         // Первая проверка через 2 секунды
         setTimeout(() => {
             this.checkForUpdates();
         }, 2000);
-        
-        console.log('⚡ Мониторинг настроен: проверка через backend каждые 10 секунд, первая через 2 секунды');
     }
     
     async checkForUpdates() {
         if (this.isUpdating) {
-            console.log('🔄 Уже в процессе обновления, пропускаем проверку');
             return;
         }
-        
-        console.log('🔍 Проверяем обновления через backend...');
-        console.log('🕐 Время проверки:', new Date().toLocaleTimeString());
         
         try {
             // Проверяем обновления через backend
             const result = await window.api.checkForUpdates();
             
-            console.log('📊 Полный ответ backend:', JSON.stringify(result, null, 2));
-            
             if (result && result.success && result.hasUpdate) {
-                console.log('🆕 BACKEND СООБЩАЕТ О НОВОМ ОБНОВЛЕНИИ!');
-                console.log('📝 Данные коммита:', result.latestCommit);
-                console.log('🔔 Источник:', result.source);
+                console.log('🆕 Получено обновление!');
                 
                 // Сохраняем информацию о том что обновление обнаружено
                 try {
@@ -171,25 +148,16 @@ class App {
                         commit: result.latestCommit
                     }));
                 } catch (e) {
-                    console.log('⚠️ Не удалось сохранить информацию об обновлении');
+                    // Игнорируем ошибки localStorage
                 }
                 
                 this.handleNewUpdate(result.latestCommit);
                 return;
-            } else if (result && result.success) {
-                console.log('✅ Новых обновлений нет');
-                console.log('📝 Текущий коммит:', result.latestCommit?.sha?.substring(0, 7) || 'unknown');
-                console.log('🔔 Источник:', result.source);
-            } else {
-                console.log('⚠️ Backend не смог проверить обновления:', result?.error || 'unknown error');
             }
             
         } catch (error) {
-            console.log('❌ Ошибка проверки обновлений через backend:', error.message);
-            
             // Если API эндпоинт не найден (404), используем fallback на GitHub
             if (error.message.includes('404')) {
-                console.log('🔄 API эндпоинт не найден, переходим на проверку GitHub напрямую');
                 await this.checkForUpdatesGitHub();
                 return;
             }
@@ -199,7 +167,6 @@ class App {
                 clearInterval(this.updateCheckInterval);
             }
             
-            console.log('🔄 Перезапуск мониторинга через 15 минут из-за ошибки backend');
             this.updateCheckInterval = setInterval(() => {
                 this.checkForUpdates();
             }, 900000); // 15 минут при ошибках
@@ -208,11 +175,8 @@ class App {
     
     // Fallback проверка через GitHub (если API не реализован)
     async checkForUpdatesGitHub() {
-        console.log('🔍 Fallback: проверяем GitHub напрямую...');
-        
         const config = window.RkMConfig?.github;
         if (!config) {
-            console.log('❌ Конфигурация GitHub не найдена');
             return;
         }
         
@@ -220,8 +184,6 @@ class App {
             const timestamp = Date.now();
             const randomParam = Math.random().toString(36).substring(7);
             const url = `${config.apiUrl}/commits?per_page=1&_t=${timestamp}&_r=${randomParam}`;
-            
-            console.log('📡 Fallback запрос к GitHub API:', url);
             
             const response = await fetch(url, {
                 method: 'GET',
@@ -234,15 +196,11 @@ class App {
                 cache: 'no-store'
             });
             
-            console.log(`📊 GitHub API ответ: ${response.status} ${response.statusText}`);
-            
             if (response.status === 403) {
-                console.log('⚠️ GitHub rate limit, останавливаем fallback проверки');
                 return;
             }
             
             if (response.status === 404) {
-                console.log('❌ GitHub репозиторий не найден');
                 return;
             }
             
@@ -254,7 +212,6 @@ class App {
             
             if (commits && commits[0]) {
                 const latestCommit = commits[0];
-                console.log('📌 Последний коммит (GitHub):', latestCommit.sha.substring(0, 7));
                 
                 let storedCommit = null;
                 try {
@@ -263,10 +220,8 @@ class App {
                     storedCommit = sessionStorage.getItem('rkm_last_commit');
                 }
                 
-                console.log('💾 Сохраненный коммит:', storedCommit ? storedCommit.substring(0, 7) : 'none');
-                
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    console.log('🆕 НАЙДЕН НОВЫЙ КОММИТ! (через GitHub fallback)');
+                    console.log('🆕 Получено обновление!');
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
@@ -275,41 +230,29 @@ class App {
                     } catch (e) {
                         sessionStorage.setItem('rkm_last_commit', latestCommit.sha);
                     }
-                    console.log('📋 Первый запуск - сохранен коммит (GitHub)');
-                } else {
-                    console.log('✅ Новых коммитов нет (GitHub)');
                 }
             }
             
         } catch (error) {
-            console.log('❌ Ошибка fallback проверки GitHub:', error.message);
+            // Игнорируем ошибки fallback проверки
         }
     }
     
     handleNewUpdate(commit) {
-        console.log('🚀 НАЧИНАЕМ ПРОЦЕДУРУ ОБНОВЛЕНИЯ (данные от backend)');
-        console.log('📝 Коммит:', commit.sha?.substring(0, 7) || 'unknown', '-', commit.commit?.message || commit.message || 'no message');
-        
         this.isUpdating = true;
         
         // Полностью останавливаем мониторинг
         if (this.updateCheckInterval) {
             clearInterval(this.updateCheckInterval);
             this.updateCheckInterval = null;
-            console.log('⏹️ Мониторинг остановлен');
         }
         
-        console.log('⏰ Показываем 5-секундное предупреждение...');
-        
         this.showUpdateWarning(() => {
-            console.log('✅ Предупреждение завершено, показываем страницу обновления');
             this.showUpdatePage(commit);
         });
     }
     
     showUpdateWarning(callback) {
-        console.log('⚠️ Показываем предупреждение об обновлении');
-        
         let countdown = 5;
         
         const notificationId = window.notifications?.show(
@@ -318,18 +261,14 @@ class App {
             0 // Не исчезает автоматически
         );
         
-        console.log('📢 ID уведомления:', notificationId);
-        
         // Звуковое предупреждение
         if (window.soundSystem) {
-            console.log('🔊 Воспроизводим звук предупреждения');
             window.soundSystem.playWarning();
         }
         
         // Обновляем таймер каждую секунду
         const timer = setInterval(() => {
             countdown--;
-            console.log('⏰ Обратный отсчет:', countdown);
             
             const notification = document.getElementById(notificationId);
             if (notification) {
@@ -337,22 +276,17 @@ class App {
                 if (textEl) {
                     textEl.innerHTML = this.createCountdownHTML(countdown);
                 }
-            } else {
-                console.log('⚠️ Уведомление не найдено в DOM');
             }
             
             if (countdown <= 0) {
                 clearInterval(timer);
-                console.log('⏰ Обратный отсчет завершен');
                 
                 // Скрываем уведомление
                 if (notificationId) {
                     window.notifications?.hide(notificationId);
-                    console.log('🗑️ Уведомление скрыто');
                 }
                 
                 // Выполняем callback
-                console.log('▶️ Выполняем callback');
                 callback();
             }
         }, 1000);
@@ -370,16 +304,12 @@ class App {
     }
     
     showUpdatePage(commit) {
-        console.log('📄 Создаем страницу обновления (данные от backend)');
-        
         // Сохраняем новый коммит
         const commitSha = commit.sha || commit.id || 'unknown';
         try {
             localStorage.setItem('rkm_last_commit', commitSha);
-            console.log('💾 Новый коммит сохранен в localStorage');
         } catch (e) {
             sessionStorage.setItem('rkm_last_commit', commitSha);
-            console.log('💾 Новый коммит сохранен в sessionStorage (fallback)');
         }
         
         // Обработка данных коммита от backend
@@ -399,7 +329,7 @@ class App {
                 <div class="main-container">
                     <div class="status-icon rotating">🔄</div>
                     <h1 class="main-title">Обновление сайта</h1>
-                    <p class="update-message">🎵 Применяем последние изменения...</p>
+                    <p class="update-message">Применяем последние изменения...</p>
                     
                     <div class="commit-info">
                         <h3>🆕 Последний коммит:</h3>
@@ -413,38 +343,31 @@ class App {
                     
                     <div class="loading-section">
                         <div class="loading-spinner"></div>
-                        <p class="loading-text">Воспроизводим мелодию обновления...</p>
+                        <p class="loading-text"></p>
                         <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Обновление получено через backend</p>
                     </div>
                     
                     <div class="auto-refresh">
-                        🎵 Сайт автоматически перезагрузится через <span id="countdown">30</span> секунд
+                        Сайт автоматически перезагрузится через <span id="countdown">30</span> секунд
                     </div>
                 </div>
             </div>
         `;
         
-        console.log('🔄 Переинициализируем модули');
         this.reinitializeModules();
         
         // СРАЗУ запускаем зацикленную мелодию
         let melodyIntervalId = null;
         if (window.soundSystem) {
-            console.log('🎵 Запускаем зацикленную мелодию обновления');
             melodyIntervalId = window.soundSystem.startLoopingUpdateMelody();
-        } else {
-            console.log('⚠️ Система звуков недоступна');
         }
         
         // Запускаем 30-секундный таймер
-        console.log('⏲️ Запускаем 30-секундный таймер перезагрузки');
         this.startSimpleCountdown(30, melodyIntervalId);
     }
     
     // Тестовая функция для проверки системы обновления
     testUpdateSystem() {
-        console.log('🧪 ТЕСТИРОВАНИЕ СИСТЕМЫ ОБНОВЛЕНИЯ (через backend)');
-        
         const fakeCommit = {
             sha: 'test1234567890abcdef',
             commit: {
@@ -476,25 +399,22 @@ class App {
                     window.soundSystem.stopLoopingMelody(melodyIntervalId);
                 }
                 
-                console.log('⏰ Время ожидания истекло, перезагружаем страницу');
                 window.location.reload();
             }
         }, 1000);
     }
     
     async checkBackendStatus() {
-        console.log('🏥 Проверяем статус backend:', window.api?.baseUrl || 'URL не определен');
-        
         try {
             const connected = await window.api.testConnection();
             if (!connected) {
-                console.log('❌ Backend недоступен, показываем offline страницу');
+                console.log('❌ Backend недоступен');
                 this.showOfflinePage();
             } else {
-                console.log('✅ Backend доступен и работает');
+                console.log('✅ Backend доступен');
             }
         } catch (error) {
-            console.log('❌ Ошибка при проверке backend:', error.message);
+            console.log('❌ Backend недоступен');
             this.showOfflinePage();
         }
     }
@@ -502,8 +422,6 @@ class App {
     showOfflinePage() {
         const config = window.RkMConfig?.github;
         const helpUrl = config ? config.getIssueUrl('helpBackend') : 'https://github.com/AmKilopa/RkM/issues/new?title=HBR';
-        
-        console.log('📴 Показываем offline страницу (backend недоступен)');
         
         document.body.innerHTML = `
             <button onclick="window.open('${config ? config.getIssueUrl('home') : '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
@@ -519,7 +437,7 @@ class App {
                     
                     <div class="offline-content">
                         <div class="offline-info">
-                            <p>Backend: https://rkm-9vui.onrender.com</p>
+                            <p>Ожидайте, в течение 5 минут</p>
                             <p>Если сайт долго не работает, вы можете подать просьбу</p>
                         </div>
                         
@@ -544,10 +462,9 @@ class App {
         this.reinitializeModules();
         
         setInterval(async () => {
-            console.log('🔄 Автопроверка backend...');
             const connected = await window.api.testConnection();
             if (connected) {
-                console.log('✅ Backend восстановлен, перезагружаем страницу');
+                console.log('✅ Backend восстановлен');
                 window.location.reload();
             }
         }, 10000);
@@ -568,13 +485,4 @@ class App {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
-    console.log('🚀 RkM приложение запущено');
-    console.log('🔗 Backend: https://rkm-9vui.onrender.com');
-    console.log('🧪 Тестовые функции:');
-    console.log('  window.app.testUpdateSystem() - тест UI уведомления');
-    console.log('  window.app.testForceUpdate() - принудительный флаг на backend');
-    
-    // Добавляем информацию о браузере для диагностики
-    console.log('🌐 Браузер:', navigator.userAgent);
-    console.log('🔄 Поддержка localStorage:', typeof(Storage) !== "undefined");
 });

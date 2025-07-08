@@ -27,7 +27,7 @@ window.RkMConfig = {
     api: {
         backend: {
             local: 'http://localhost:3000/api',
-            production: 'https://rkm-9vui.onrender.com/api'  // НОВЫЙ URL!
+            production: 'https://rkm-9vui.onrender.com/api'
         },
         // Определение текущего URL
         get backendUrl() {
@@ -67,7 +67,6 @@ window.RkMConfig = {
 class ApiClient {
     constructor() {
         this.baseUrl = this.getBackendUrl();
-        console.log('🔗 API клиент инициализирован, Backend URL:', this.baseUrl);
     }
     
     getBackendUrl() {
@@ -87,7 +86,7 @@ class ApiClient {
             return 'http://localhost:3000/api';
         }
         
-        // Новый production URL
+        // Production URL
         return 'https://rkm-9vui.onrender.com/api';
     }
     
@@ -102,7 +101,6 @@ class ApiClient {
         };
         
         try {
-            console.log(`📡 API запрос: ${config.method || 'GET'} ${url}`);
             const response = await fetch(url, config);
             
             if (!response.ok) {
@@ -110,11 +108,9 @@ class ApiClient {
             }
             
             const data = await response.json();
-            console.log('✅ API ответ получен');
             return data;
             
         } catch (error) {
-            console.log('❌ Ошибка API:', error.message);
             throw error;
         }
     }
@@ -128,10 +124,9 @@ class ApiClient {
         return this.request('/updates/latest-commit', { method: 'GET' });
     }
     
-    // === ТЕСТОВЫЙ МЕТОД - ИСПРАВЛЕНО! ===
+    // === ТЕСТОВЫЙ МЕТОД ===
     async testConnection() {
         try {
-            // ИСПРАВЛЕНО: проверяем API эндпоинт /status вместо корневого URL
             const response = await fetch(`${this.baseUrl}/status`, {
                 method: 'GET',
                 headers: {
@@ -140,18 +135,14 @@ class ApiClient {
                 timeout: 5000
             });
             
-            console.log('🏥 Backend проверка:', response.status, response.statusText);
-            
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 Backend ответ:', data);
                 return data.status === 'running';
             }
             
             return false;
             
         } catch (error) {
-            console.log('❌ Backend недоступен:', error.message);
             return false;
         }
     }
@@ -280,20 +271,11 @@ class ModalSystem {
 
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🔧 Инициализация API и модулей');
-    
     // Создаем глобальные экземпляры
     window.api = new ApiClient();
     window.authSystem = new AuthSystem();
     window.modals = new ModalSystem();
     
-    console.log('✅ API клиент создан:', window.api.baseUrl);
-    
-    // Проверяем соединение
+    // Проверяем соединение (тихо)
     const connected = await window.api.testConnection();
-    if (connected) {
-        console.log('✅ Соединение с backend установлено');
-    } else {
-        console.log('❌ Backend недоступен');
-    }
 });

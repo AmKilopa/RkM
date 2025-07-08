@@ -1,19 +1,18 @@
-// === СИСТЕМА ПРИЯТНЫХ ЗВУКОВ ===
+// === СИСТЕМА ПРИЯТНЫХ ЗВУКОВ (ОЧИЩЕННАЯ) ===
 class SoundSystem {
     constructor() {
         this.audioContext = null;
-        this.masterVolume = 0.3; // Умеренная громкость
+        this.masterVolume = 0.3;
         this.enabled = true;
         this.hasUserInteracted = false;
+        this.initializationAttempts = 0;
+        this.maxInitAttempts = 3;
         
         this.init();
     }
     
     init() {
-        // Ждем первое взаимодействие пользователя
         this.waitForUserInteraction();
-        
-        // Загружаем настройки из localStorage
         this.loadSettings();
     }
     
@@ -31,84 +30,107 @@ class SoundSystem {
         document.addEventListener('touchstart', handler);
     }
     
-    initAudioContext() {
+    async initAudioContext() {
         try {
+            this.initializationAttempts++;
+            
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // ВАЖНО: Возобновляем контекст если он suspended
+            if (this.audioContext.state === 'suspended') {
+                await this.audioContext.resume();
+            }
+            
         } catch (error) {
-            console.log('🔊 Web Audio API не поддерживается');
             this.enabled = false;
+            
+            // Повторная попытка через 2 секунды
+            if (this.initializationAttempts < this.maxInitAttempts) {
+                setTimeout(() => {
+                    this.initAudioContext();
+                }, 2000);
+            }
         }
     }
     
-    loadSettings() {
-        const volume = localStorage.getItem('rkm_sound_volume');
-        const enabled = localStorage.getItem('rkm_sound_enabled');
-        
-        if (volume !== null) {
-            this.masterVolume = parseFloat(volume);
+    // ИСПРАВЛЕННАЯ проверка готовности
+    async ensureAudioReady() {
+        if (!this.hasUserInteracted) {
+            return false;
         }
         
-        if (enabled !== null) {
-            this.enabled = enabled === 'true';
+        if (!this.audioContext) {
+            return false;
+        }
+        
+        // Проверяем и возобновляем контекст если нужно
+        if (this.audioContext.state === 'suspended') {
+            try {
+                await this.audioContext.resume();
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        return this.audioContext.state === 'running';
+    }
+    
+    loadSettings() {
+        try {
+            const volume = localStorage.getItem('rkm_sound_volume');
+            const enabled = localStorage.getItem('rkm_sound_enabled');
+            
+            if (volume !== null) {
+                this.masterVolume = parseFloat(volume);
+            }
+            
+            if (enabled !== null) {
+                this.enabled = enabled === 'true';
+            }
+        } catch (error) {
+            // Игнорируем ошибки загрузки настроек
         }
     }
     
     saveSettings() {
-        localStorage.setItem('rkm_sound_volume', this.masterVolume.toString());
-        localStorage.setItem('rkm_sound_enabled', this.enabled.toString());
+        try {
+            localStorage.setItem('rkm_sound_volume', this.masterVolume.toString());
+            localStorage.setItem('rkm_sound_enabled', this.enabled.toString());
+        } catch (error) {
+            // Игнорируем ошибки сохранения настроек
+        }
     }
     
     // === ОСНОВНЫЕ ЗВУКИ ===
-    playSuccess() {
-        if (!this.shouldPlay()) return;
-        
-        // Приятный восходящий аккорд
-        this.playChord([523.25, 659.25, 783.99], 0.4, 'sine'); // C5, E5, G5
+    async playSuccess() {
+        if (!(await this.ensureAudioReady())) return;
+        this.playChord([523.25, 659.25, 783.99], 0.4, 'sine');
     }
     
-    playError() {
-        if (!this.shouldPlay()) return;
-        
-        // Мягкий низкий тон, не резкий
-        this.playTone(220, 0.3, 'sine', 0.6); // A3
+    async playError() {
+        if (!(await this.ensureAudioReady())) return;
+        this.playTone(220, 0.3, 'sine', 0.6);
     }
     
-    playInfo() {
-        if (!this.shouldPlay()) return;
-        
-        // Нейтральный приятный тон
-        this.playTone(440, 0.25, 'sine', 0.3); // A4
+    async playInfo() {
+        if (!(await this.ensureAudioReady())) return;
+        this.playTone(440, 0.25, 'sine', 0.3);
     }
     
-    playWarning() {
-        if (!this.shouldPlay()) return;
-        
-        // Два быстрых тона - внимание, но не агрессивно
-        this.playTone(523.25, 0.15, 'sine', 0.2); // C5
+    async playWarning() {
+        if (!(await this.ensureAudioReady())) return;
+        this.playTone(523.25, 0.15, 'sine', 0.2);
         setTimeout(() => {
-            this.playTone(659.25, 0.15, 'sine', 0.2); // E5
+            this.playTone(659.25, 0.15, 'sine', 0.2);
         }, 150);
     }
     
-    // === СПЕЦИАЛЬНЫЕ ЗВУКИ ===
-    playPageLoad() {
-        if (!this.shouldPlay()) return;
+    // === ИСПРАВЛЕННАЯ МЕЛОДИЯ ОБНОВЛЕНИЯ ===
+    async playUpdateMelody() {
+        if (!(await this.ensureAudioReady())) {
+            return 0;
+        }
         
-        // Мягкая восходящая арпеджио
-        const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
-        notes.forEach((freq, index) => {
-            setTimeout(() => {
-                this.playTone(freq, 0.2, 'sine', 0.15);
-            }, index * 100);
-        });
-    }
-    
-    playUpdateMelody() {
-        if (!this.shouldPlay()) return;
-        
-        console.log('🎵 Воспроизводим мелодию обновления');
-        
-        // Частоты нот
         const noteFreqs = {
             G4: 392.00,
             A4: 440.00,
@@ -117,7 +139,6 @@ class SoundSystem {
             D5: 587.33
         };
         
-        // Мелодия с настроенными длительностями
         const melody = [
             { note: 'D5', duration: 0.3 },
             { note: 'D5', duration: 0.3 },
@@ -145,31 +166,51 @@ class SoundSystem {
         
         melody.forEach((noteData, index) => {
             setTimeout(() => {
-                const frequency = noteFreqs[noteData.note];
-                this.playTone(frequency, noteData.duration, 'sine', 0.2);
+                try {
+                    const frequency = noteFreqs[noteData.note];
+                    this.playTone(frequency, noteData.duration, 'sine', 0.2);
+                } catch (error) {
+                    // Игнорируем ошибки отдельных нот
+                }
             }, currentTime * 1000);
             
-            currentTime += noteData.duration + 0.04; // Небольшая пауза между нотами
+            currentTime += noteData.duration + 0.04;
         });
         
-        // Возвращаем общую длительность мелодии
         return currentTime * 1000;
     }
     
-    startLoopingUpdateMelody() {
-        if (!this.shouldPlay()) return null;
-        
-        console.log('🔄 Запуск зацикленной мелодии обновления');
+    // === ИСПРАВЛЕННАЯ ЗАЦИКЛЕННАЯ МЕЛОДИЯ ===
+    async startLoopingUpdateMelody() {
+        // Проверяем готовность аудио
+        if (!(await this.ensureAudioReady())) {
+            // Пытаемся инициализировать заново
+            await this.initAudioContext();
+            
+            if (!(await this.ensureAudioReady())) {
+                return null;
+            }
+        }
         
         // Воспроизводим первый раз
-        const melodyDuration = this.playUpdateMelody();
+        const melodyDuration = await this.playUpdateMelody();
         
-        // Добавляем паузу в 1 секунду между повторениями
+        if (melodyDuration === 0) {
+            return null;
+        }
+        
         const totalCycleDuration = melodyDuration + 1000;
         
-        // Запускаем повторение
-        const intervalId = setInterval(() => {
-            this.playUpdateMelody();
+        let cycleCount = 1;
+        const intervalId = setInterval(async () => {
+            cycleCount++;
+            
+            // Проверяем готовность перед каждым воспроизведением
+            if (await this.ensureAudioReady()) {
+                await this.playUpdateMelody();
+            } else {
+                clearInterval(intervalId);
+            }
         }, totalCycleDuration);
         
         return intervalId;
@@ -178,21 +219,28 @@ class SoundSystem {
     stopLoopingMelody(intervalId) {
         if (intervalId) {
             clearInterval(intervalId);
-            console.log('⏹️ Зацикленная мелодия остановлена');
         }
     }
     
-    playButtonClick() {
-        if (!this.shouldPlay()) return;
+    // === ВСПОМОГАТЕЛЬНЫЕ ЗВУКИ ===
+    async playPageLoad() {
+        if (!(await this.ensureAudioReady())) return;
         
-        // Короткий приятный клик
+        const notes = [261.63, 329.63, 392.00, 523.25];
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                this.playTone(freq, 0.2, 'sine', 0.15);
+            }, index * 100);
+        });
+    }
+    
+    async playButtonClick() {
+        if (!(await this.ensureAudioReady())) return;
         this.playTone(800, 0.08, 'sine', 0.1);
     }
     
-    playModal() {
-        if (!this.shouldPlay()) return;
-        
-        // Мягкий звук появления модального окна
+    async playModal() {
+        if (!(await this.ensureAudioReady())) return;
         this.playTone(523.25, 0.2, 'sine', 0.15);
         setTimeout(() => {
             this.playTone(659.25, 0.15, 'sine', 0.1);
@@ -200,12 +248,10 @@ class SoundSystem {
     }
     
     // === БАЗОВЫЕ ФУНКЦИИ ===
-    shouldPlay() {
-        return this.enabled && this.hasUserInteracted && this.audioContext && this.masterVolume > 0;
-    }
-    
     playTone(frequency, duration, waveType = 'sine', volume = 0.2) {
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state !== 'running') {
+            return;
+        }
         
         try {
             const oscillator = this.audioContext.createOscillator();
@@ -217,7 +263,6 @@ class SoundSystem {
             oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
             oscillator.type = waveType;
             
-            // Плавное нарастание и затухание
             const now = this.audioContext.currentTime;
             const fadeIn = 0.01;
             const fadeOut = 0.05;
@@ -231,7 +276,7 @@ class SoundSystem {
             oscillator.stop(now + duration);
             
         } catch (error) {
-            // Игнорируем ошибки аудио
+            // Игнорируем ошибки воспроизведения
         }
     }
     
@@ -260,6 +305,17 @@ class SoundSystem {
     isEnabled() {
         return this.enabled;
     }
+    
+    // === ДИАГНОСТИКА (только для разработчиков) ===
+    getStatus() {
+        return {
+            enabled: this.enabled,
+            hasUserInteracted: this.hasUserInteracted,
+            audioContextState: this.audioContext?.state || 'не создан',
+            volume: this.masterVolume,
+            initAttempts: this.initializationAttempts
+        };
+    }
 }
 
 // === ГЛОБАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ===
@@ -267,8 +323,26 @@ window.soundSystem = new SoundSystem();
 
 // === АВТОЗАПУСК ЗВУКА ЗАГРУЗКИ ===
 document.addEventListener('DOMContentLoaded', () => {
-    // Воспроизводим звук загрузки страницы
-    setTimeout(() => {
-        window.soundSystem.playPageLoad();
+    setTimeout(async () => {
+        await window.soundSystem.playPageLoad();
     }, 1000);
+    
+    // Добавляем консольные команды только для разработчиков
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window.testSound = async () => {
+            console.log('🧪 Тестирование звуковой системы');
+            console.log('📊 Статус:', window.soundSystem.getStatus());
+            await window.soundSystem.playUpdateMelody();
+        };
+        
+        window.testMelodyLoop = async () => {
+            console.log('🧪 Тестирование зацикленной мелодии');
+            const id = await window.soundSystem.startLoopingUpdateMelody();
+            
+            // Останавливаем через 10 секунд
+            setTimeout(() => {
+                window.soundSystem.stopLoopingMelody(id);
+            }, 10000);
+        };
+    }
 });
