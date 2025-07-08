@@ -1,6 +1,6 @@
-/* === КОМПОНЕНТЫ === */
+/* === УЛУЧШЕННЫЕ КОМПОНЕНТЫ === */
 
-/* Модальные окна */
+/* === МОДАЛЬНЫЕ ОКНА (СУПЕР УЛУЧШЕННЫЕ) === */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -8,71 +8,97 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     z-index: 2000;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(20px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modal-overlay.active {
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    opacity: 1;
 }
 
 .modal {
-    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
-    border: 1px solid #444;
-    border-radius: 16px;
-    padding: 2.5rem;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    animation: modalSlideIn 0.3s ease;
+    background: var(--gradient-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-xl);
+    padding: 3rem;
+    max-width: 900px;
+    width: 95%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 
+        0 50px 100px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 var(--shadow-light);
+    transform: scale(0.8) translateY(50px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(30px);
+    position: relative;
 }
 
-@keyframes modalSlideIn {
-    from { transform: scale(0.9) translateY(-50px); opacity: 0; }
-    to { transform: scale(1) translateY(0); opacity: 1; }
+.modal-overlay.active .modal {
+    transform: scale(1) translateY(0);
+}
+
+.modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow), var(--accent-red));
+    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
 }
 
 .modal-header {
     margin-bottom: 2rem;
     text-align: center;
+    position: relative;
 }
 
 .modal-title {
-    color: #fff;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 300;
     text-align: center;
+    background: linear-gradient(45deg, #fff, var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .modal-close {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    background: none;
+    top: -1rem;
+    right: -1rem;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
-    color: #888;
-    font-size: 1.8rem;
+    color: var(--text-muted);
+    font-size: 1.5rem;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: all var(--transition-normal);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
 }
 
 .modal-close:hover {
-    color: #fff;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
 }
 
-/* === УЛУЧШЕННЫЕ УВЕДОМЛЕНИЯ === */
+/* === УВЕДОМЛЕНИЯ (КРУТЫЕ) === */
 .notifications-container {
     position: fixed;
     top: 25px;
@@ -81,22 +107,24 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 400px;
+    max-width: 450px;
 }
 
 .notification {
-    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
-    border: 1px solid #333;
-    border-radius: 12px;
+    background: var(--gradient-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
     padding: 1.5rem 2rem;
-    min-width: 350px;
-    color: #fff;
-    transform: translateX(450px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 400px;
+    color: var(--text-primary);
+    transform: translateX(500px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 var(--shadow-light);
+    backdrop-filter: blur(30px);
 }
 
 .notification::before {
@@ -106,7 +134,8 @@
     left: 0;
     height: 100%;
     width: 4px;
-    background: #007bff;
+    background: var(--accent-blue);
+    transition: all var(--transition-normal);
 }
 
 .notification.show {
@@ -114,11 +143,11 @@
 }
 
 .notification.success::before {
-    background: linear-gradient(180deg, #28a745, #20c997);
+    background: linear-gradient(180deg, var(--accent-green), #20c997);
 }
 
 .notification.error::before {
-    background: linear-gradient(180deg, #dc3545, #e74c3c);
+    background: linear-gradient(180deg, var(--accent-red), #e74c3c);
 }
 
 .notification.info::before {
@@ -126,30 +155,26 @@
 }
 
 .notification.warning::before {
-    background: linear-gradient(180deg, #ffc107, #f39c12);
+    background: linear-gradient(180deg, var(--accent-yellow), #f39c12);
 }
 
 .notification-content {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 15px;
 }
 
 .notification-icon {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     margin-top: 2px;
     flex-shrink: 0;
+    filter: drop-shadow(0 0 10px currentColor);
 }
-
-.notification.success .notification-icon::before { content: '✅'; }
-.notification.error .notification-icon::before { content: '❌'; }
-.notification.info .notification-icon::before { content: 'ℹ️'; }
-.notification.warning .notification-icon::before { content: '⚠️'; }
 
 .notification-text {
     flex: 1;
     font-size: 1rem;
-    line-height: 1.4;
+    line-height: 1.5;
     font-weight: 500;
 }
 
@@ -159,12 +184,12 @@
     right: 15px;
     background: none;
     border: none;
-    color: #888;
+    color: var(--text-muted);
     cursor: pointer;
     font-size: 1.4rem;
-    transition: all 0.3s ease;
-    width: 24px;
-    height: 24px;
+    transition: all var(--transition-normal);
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -172,11 +197,12 @@
 }
 
 .notification-close:hover {
-    color: #fff;
+    color: var(--text-primary);
     background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
 }
 
-/* Анимация прогресса закрытия */
+/* Прогресс бар для автозакрытия */
 .notification-progress {
     position: absolute;
     bottom: 0;
@@ -186,6 +212,7 @@
     width: 100%;
     transform-origin: right;
     animation: progressBar 5s linear;
+    border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
 }
 
 @keyframes progressBar {
@@ -193,70 +220,11 @@
     to { transform: scaleX(0); }
 }
 
-/* Специальные стили для разных типов */
-.notification.success {
-    border-color: rgba(40, 167, 69, 0.3);
-    background: linear-gradient(145deg, #1a2e1a, #2a3e2a);
-}
-
-.notification.error {
-    border-color: rgba(220, 53, 69, 0.3);
-    background: linear-gradient(145deg, #2e1a1a, #3e2a2a);
-}
-
-.notification.info {
-    border-color: rgba(23, 162, 184, 0.3);
-    background: linear-gradient(145deg, #1a2a2e, #2a3a3e);
-}
-
-.notification.warning {
-    border-color: rgba(255, 193, 7, 0.3);
-    background: linear-gradient(145deg, #2e2a1a, #3e3a2a);
-}
-
-/* Прогресс бар */
-.progress-bar {
-    width: 100%;
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 1.5rem;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #007bff, #0056b3);
-    width: 0%;
-    transition: width 0.3s ease;
-    border-radius: 3px;
-}
-
-/* Спиннер загрузки */
-.spinner {
-    border: 3px solid #333;
-    border-top: 3px solid #007bff;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    margin-right: 12px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* === МОДУЛЬ CHANGELOG === */
+/* === CHANGELOG МОДУЛЬ (TIMELINE СТИЛЬ) === */
 .changelog-modal .modal {
-    max-width: 800px;
-    max-height: 85vh;
-    background: linear-gradient(145deg, #0f0f0f, #1f1f1f);
-    border: 1px solid #444;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8);
+    max-width: 1000px;
+    max-height: 90vh;
+    padding: 2rem;
 }
 
 .changelog-header {
@@ -264,440 +232,113 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid #333;
-    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
-    border-radius: 12px;
-    padding: 1.5rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.changelog-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 400;
+    background: linear-gradient(45deg, var(--accent-blue), var(--accent-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .changelog-header p {
-    color: #ccc;
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+.changelog-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
 }
 
 .refresh-btn {
     background: linear-gradient(145deg, #17a2b8, #138496);
     border: none;
     color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 12px 20px;
+    border-radius: var(--border-radius-md);
     cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all var(--transition-normal);
     box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
 }
 
 .refresh-btn:hover {
     background: linear-gradient(145deg, #138496, #117a8b);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
 }
 
-.commits-list {
-    max-height: 450px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-
-.commits-list::-webkit-scrollbar {
-    width: 10px;
-}
-
-.commits-list::-webkit-scrollbar-track {
-    background: #1a1a1a;
-    border-radius: 5px;
-}
-
-.commits-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(145deg, #444, #666);
-    border-radius: 5px;
-}
-
-.commits-list::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(145deg, #555, #777);
-}
-
-.commit-item {
-    background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
-    border: 1px solid #333;
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.commit-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 4px;
-    background: linear-gradient(180deg, #17a2b8, #007bff);
-}
-
-.commit-item:hover {
-    border-color: #555;
-    background: linear-gradient(145deg, #111, #222);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-.commit-header {
+/* Фильтры для логов */
+.changelog-filters {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.commit-sha {
-    background: linear-gradient(145deg, #ffc107, #e0a800);
-    color: #000;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    font-weight: bold;
-    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-}
-
-.commit-time {
-    color: #888;
-    font-size: 0.9rem;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px 8px;
-    border-radius: 6px;
-}
-
-.commit-message {
-    color: #17a2b8;
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-    word-wrap: break-word;
-    font-weight: 500;
-    padding: 1rem;
-    background: rgba(23, 162, 184, 0.1);
-    border-radius: 8px;
-    border-left: 3px solid #17a2b8;
-}
-
-.commit-author {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    padding: 0.75rem;
-    background: linear-gradient(145deg, #1a2a1a, #2a3a2a);
-    border-radius: 8px;
-}
-
-.author-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid #28a745;
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-}
-
-.commit-author span {
-    color: #28a745;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.commit-date {
-    color: #666;
-    font-size: 0.85rem;
-    font-family: 'Courier New', monospace;
-    text-align: center;
-    padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 6px;
-}
-
-.error-message {
-    text-align: center;
-    padding: 2rem;
-}
-
-.error-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.error-message h3 {
-    color: #dc3545;
-    margin-bottom: 1rem;
-}
-
-.error-message p {
-    color: #888;
+    gap: 0.5rem;
     margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
-.retry-btn {
-    background: linear-gradient(145deg, #dc3545, #c82333);
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
+.filter-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 25px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
 }
 
-.retry-btn:hover {
-    background: linear-gradient(145deg, #c82333, #a71e2a);
-    transform: translateY(-2px);
-}
-
-/* === РЕПОЗИТОРИЙ НЕ НАЙДЕН === */
-.repo-not-found {
-    text-align: center;
-    padding: 2rem;
-}
-
-.repo-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.repo-not-found h3 {
-    color: #ffc107;
-    margin-bottom: 1rem;
-}
-
-.repo-not-found p {
-    color: #888;
-    margin-bottom: 1.5rem;
-}
-
-.repo-info {
-    background: #000;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 1.5rem 0;
-    text-align: left;
-}
-
-.repo-info strong {
-    color: #fff;
-}
-
-.repo-info ul {
-    list-style: none;
-    padding-left: 0;
-    margin-top: 1rem;
-}
-
-.repo-info li {
-    color: #ccc;
-    margin-bottom: 0.5rem;
-    padding-left: 1rem;
-    position: relative;
-}
-
-.repo-info li::before {
-    content: '•';
-    color: #ffc107;
-    position: absolute;
-    left: 0;
-}
-
-.create-repo-btn {
-    background: linear-gradient(145deg, #28a745, #1e7e34);
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-/* === УПРАВЛЕНИЕ ЗВУКОМ === */
-.sound-control {
-    position: fixed;
-    bottom: 80px;
-    left: 25px;
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.sound-btn {
-    background: linear-gradient(145deg, #6f42c1, #5a2d91);
-    border: none;
-    color: white;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sound-btn:hover {
-    background: linear-gradient(145deg, #5a2d91, #4a237a);
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
-}
-
-.sound-panel {
-    background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
-    border: 1px solid #444;
-    border-radius: 12px;
-    padding: 1rem;
-    min-width: 200px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
-
-.sound-control:hover .sound-panel {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
-}
-
-.sound-panel label {
-    color: #ccc;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-.sound-panel input[type="range"] {
-    width: 100%;
-    margin-bottom: 1rem;
-    accent-color: #6f42c1;
-}
-
-.test-btn {
-    background: linear-gradient(145deg, #28a745, #1e7e34);
-    border: none;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: all 0.3s ease;
-    width: 100%;
-}
-
-.test-btn:hover {
-    background: linear-gradient(145deg, #1e7e34, #155724);
+.filter-btn.active,
+.filter-btn:hover {
+    background: rgba(0, 123, 255, 0.2);
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
     transform: translateY(-1px);
 }
 
-/* Мобильная версия */
-@media (max-width: 768px) {
-    .sound-control {
-        bottom: 100px;
-        left: 15px;
-    }
-    
-    .sound-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.1rem;
-    }
-    
-    .sound-panel {
-        min-width: 180px;
-        padding: 0.75rem;
-    }
+/* Поиск */
+.changelog-search {
+    position: relative;
+    margin-bottom: 2rem;
 }
 
-/* === ВИЗУАЛЬНАЯ ОБРАТНАЯ СВЯЗЬ ДЛЯ ЗВУКОВ === */
-.sound-wave {
-    position: fixed;
+.search-input {
+    width: 100%;
+    padding: 15px 50px 15px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-lg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100px;
-    height: 100px;
-    border: 2px solid #6f42c1;
-    border-radius: 50%;
-    opacity: 0;
-    animation: soundWave 0.6s ease-out;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.2rem;
     pointer-events: none;
-    z-index: 3000;
-}
-
-@keyframes soundWave {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(0.1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(2);
-    }
-}
-
-/* Анимация для кнопок при клике */
-.btn-sound-feedback {
-    animation: btnPulse 0.2s ease;
-}
-
-@keyframes btnPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-}
-
-/* Мобильная версия для changelog */
-@media (max-width: 768px) {
-    .changelog-modal .modal {
-        max-width: calc(100% - 2rem);
-        max-height: calc(100vh - 4rem);
-    }
-    
-    .changelog-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-    
-    .commit-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-    
-    .commit-item {
-        padding: 1rem;
-    }
-    
-    .commits-list {
-        max-height: 300px;
-    }
-    
-    .notification {
-        min-width: auto;
-        padding: 1rem 1.5rem;
-        font-size: 0.95rem;
-    }
-    
-    .notifications-container {
-        right: 15px;
-        left: 15px;
-        top: 80px;
-    }
 }

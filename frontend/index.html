@@ -6,11 +6,15 @@
     <title>RkM - Главная</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/settings-styles.css">
     <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
     <!-- Кнопка "Нашёл баг" -->
     <button id="bug-report-btn" class="bug-report-btn">🐛 Нашёл баг</button>
+    
+    <!-- Кнопка "Настройки" -->
+    <button id="settings-btn" class="settings-btn">⚙️ Настройки</button>
     
     <!-- Кнопка "Логи обновлений" -->
     <button id="changelog-btn" class="changelog-btn">📋 Логи обновлений</button>
@@ -37,13 +41,38 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Страница создания подмены -->
+    <div id="substitution-page" class="page">
+        <button class="back-btn">← Назад</button>
+        <div class="form-container">
+            <h2>Создание подмены</h2>
+            <form id="substitution-form">
+                <div class="form-group">
+                    <label class="form-label">Steam ID пользователя:</label>
+                    <input type="text" id="steam-id" class="form-input" placeholder="Введите Steam ID" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ссылка на аватар:</label>
+                    <input type="url" id="avatar-url" class="form-input" placeholder="https://example.com/avatar.jpg">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Никнейм:</label>
+                    <input type="text" id="nickname" class="form-input" placeholder="Введите новый никнейм" required>
+                </div>
+                <button type="submit" class="btn btn-success">Создать подмену</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Модальные окна -->
     <div id="modal-overlay" class="modal-overlay"></div>
     
     <!-- Подключение скриптов -->
     <script src="js/config.js"></script>
     <script src="js/sound-system.js"></script>
+    <script src="js/sound-settings.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/button-sounds.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/modules/changelog.js"></script>

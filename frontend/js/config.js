@@ -60,6 +60,113 @@ window.RkMConfig = {
             info: 5000,
             warning: 5000
         }
+    },
+    
+    // Основные настройки приложения
+    app: {
+        name: 'RkM',
+        version: '2.0.0',
+        author: 'AmKilopa',
+        description: 'Многофункциональное приложение для Steam',
+        build: Date.now(),
+        environment: 'production'
+    },
+    
+    // Настройки звука
+    audio: {
+        enabled: true,
+        masterVolume: 1.0,
+        defaultSoundPack: 'default',
+        categories: {
+            button: true,
+            notification: true,
+            interface: true,
+            success: true,
+            error: true,
+            warning: true
+        }
+    },
+    
+    // Настройки интерфейса
+    ui: {
+        theme: 'dark',
+        language: 'ru',
+        animations: true,
+        compactMode: false,
+        showTooltips: true,
+        autoSave: true,
+        debugMode: false
+    },
+    
+    // Фичи приложения
+    features: {
+        inventory: {
+            enabled: false,
+            inDevelopment: true,
+            betaAccess: false
+        },
+        friendError: {
+            enabled: false,
+            inDevelopment: true,
+            betaAccess: false
+        },
+        substitution: {
+            enabled: true,
+            inDevelopment: false,
+            betaAccess: false
+        },
+        settings: {
+            enabled: true,
+            inDevelopment: false,
+            betaAccess: false
+        },
+        changelog: {
+            enabled: true,
+            inDevelopment: false,
+            betaAccess: false
+        },
+        bugReport: {
+            enabled: true,
+            inDevelopment: false,
+            betaAccess: false
+        }
+    },
+    
+    // Утилиты конфигурации
+    utils: {
+        // Получить значение по пути
+        get(path, defaultValue = null) {
+            return path.split('.').reduce((obj, key) => {
+                return obj && obj[key] !== undefined ? obj[key] : defaultValue;
+            }, this);
+        },
+        
+        // Установить значение по пути
+        set(path, value) {
+            const keys = path.split('.');
+            const lastKey = keys.pop();
+            const target = keys.reduce((obj, key) => {
+                if (!obj[key]) obj[key] = {};
+                return obj[key];
+            }, this);
+            target[lastKey] = value;
+        },
+        
+        // Проверить, включена ли функция
+        isFeatureEnabled(featureName) {
+            return this.get(`features.${featureName}.enabled`, false);
+        },
+        
+        // Проверить режим разработки
+        isDevelopment() {
+            return this.get('app.environment') === 'development';
+        },
+        
+        // Получить URL API
+        getApiUrl(endpoint) {
+            const baseUrl = this.get('api.backendUrl');
+            return baseUrl + endpoint;
+        }
     }
 };
 
@@ -251,7 +358,7 @@ class ModalSystem {
             document.body.style.overflow = 'hidden';
             
             if (window.soundSystem) {
-                window.soundSystem.playModal();
+                window.soundSystem.playInterface();
             }
         }
     }
@@ -269,6 +376,13 @@ class ModalSystem {
     }
 }
 
+// Применяем утилиты к объекту конфигурации
+Object.assign(window.RkMConfig, window.RkMConfig.utils);
+
+// Применение базовых настроек
+document.documentElement.setAttribute('data-theme', window.RkMConfig.ui.theme);
+document.documentElement.setAttribute('lang', window.RkMConfig.ui.language);
+
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', async () => {
     // Создаем глобальные экземпляры
@@ -276,6 +390,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.authSystem = new AuthSystem();
     window.modals = new ModalSystem();
     
+    console.log('✅ Конфигурация RkM загружена успешно');
+    console.log(`📱 ${window.RkMConfig.app.name} v${window.RkMConfig.app.version}`);
+    
     // Проверяем соединение (тихо)
     const connected = await window.api.testConnection();
 });
+
+// Экспорт для глобального доступа
+window.config = window.RkMConfig;

@@ -1,4 +1,4 @@
-// Главный скрипт
+// === ГЛАВНЫЙ СКРИПТ ПРИЛОЖЕНИЯ ===
 class App {
     constructor() {
         this.currentPage = 'home';
@@ -19,6 +19,8 @@ class App {
         this.updateBugReportLink();
         this.startUpdateMonitoring();
         this.checkBackendStatus();
+        
+        console.log('✅ Приложение RkM инициализировано');
     }
     
     // Очистка кеша API для предотвращения проблем
@@ -28,7 +30,7 @@ class App {
             const keysToRemove = [];
             for (let i = 0; i < sessionStorage.length; i++) {
                 const key = sessionStorage.key(i);
-                if (key && key.includes('github') || key && key.includes('api')) {
+                if (key && (key.includes('github') || key.includes('api'))) {
                     keysToRemove.push(key);
                 }
             }
@@ -39,15 +41,20 @@ class App {
     }
     
     setupEventListeners() {
+        // Основные кнопки
         document.getElementById('inventory-btn')?.addEventListener('click', () => {
             if (!this.isDisabled('inventory-btn')) {
                 this.navigateTo('inventory');
+            } else {
+                this.showDisabledFeatureMessage('inventory');
             }
         });
         
         document.getElementById('friend-error-btn')?.addEventListener('click', () => {
             if (!this.isDisabled('friend-error-btn')) {
                 this.navigateTo('friend-error');
+            } else {
+                this.showDisabledFeatureMessage('friend-error');
             }
         });
         
@@ -58,6 +65,33 @@ class App {
         document.getElementById('changelog-btn')?.addEventListener('click', () => {
             this.showChangelog();
         });
+        
+        // Обработка кнопки "Назад"
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('back-btn')) {
+                this.showHomePage();
+            }
+        });
+        
+        // Клавиатурные сочетания
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.showHomePage();
+            }
+            
+            // Ctrl+R для обновления
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                this.checkForUpdates();
+            }
+        });
+        
+        // Воспроизведение звуков при загрузке
+        if (window.soundSystem) {
+            setTimeout(() => {
+                window.soundSystem.playInterface();
+            }, 500);
+        }
     }
     
     isDisabled(buttonId) {
@@ -68,8 +102,69 @@ class App {
         this.currentPage = page;
         this.updateBugReportLink();
         
-        if (page === 'substitution') {
-            window.substitutionModule.show();
+        // Воспроизводим звук навигации
+        if (window.soundSystem) {
+            window.soundSystem.playInterface();
+        }
+        
+        switch (page) {
+            case 'substitution':
+                if (window.substitutionModule) {
+                    window.substitutionModule.show();
+                } else {
+                    this.loadModule('substitution');
+                }
+                break;
+            case 'inventory':
+                if (window.inventoryModule) {
+                    window.inventoryModule.show();
+                } else {
+                    this.loadModule('inventory');
+                }
+                break;
+            case 'friend-error':
+                if (window.friendErrorModule) {
+                    window.friendErrorModule.show();
+                } else {
+                    this.loadModule('friend-error');
+                }
+                break;
+            default:
+                console.warn(`Неизвестная страница: ${page}`);
+        }
+    }
+    
+    // Загрузка модулей по требованию
+    async loadModule(moduleName) {
+        try {
+            const script = document.createElement('script');
+            script.src = `js/modules/${moduleName}.js`;
+            script.onload = () => {
+                console.log(`✅ Модуль ${moduleName} загружен`);
+                // Повторная попытка навигации после загрузки
+                this.navigateTo(moduleName);
+            };
+            script.onerror = () => {
+                console.error(`❌ Ошибка загрузки модуля ${moduleName}`);
+                window.notifications?.error(`Ошибка загрузки модуля ${moduleName}`);
+            };
+            document.head.appendChild(script);
+        } catch (error) {
+            console.error(`Ошибка загрузки модуля ${moduleName}:`, error);
+            window.notifications?.error(`Ошибка загрузки модуля ${moduleName}`);
+        }
+    }
+    
+    showDisabledFeatureMessage(feature) {
+        const messages = {
+            'inventory': 'Функция "Узнать стоимость инвентаря" находится в разработке',
+            'friend-error': 'Функция "Friend ошибка" находится в разработке'
+        };
+        
+        window.notifications?.warning(messages[feature] || 'Функция в разработке');
+        
+        if (window.soundSystem) {
+            window.soundSystem.playWarning();
         }
     }
     
@@ -87,20 +182,38 @@ class App {
             'substitution': config.getIssueUrl('substitution')
         };
         
-        bugBtn.onclick = () => window.open(links[this.currentPage], '_blank');
+        bugBtn.onclick = () => {
+            window.open(links[this.currentPage], '_blank');
+            if (window.soundSystem) {
+                window.soundSystem.playInterface();
+            }
+        };
     }
     
     showHomePage() {
+        // Удаляем все страницы кроме главной
         const pages = document.querySelectorAll('.page:not(#home-page)');
-        pages.forEach(page => page.remove());
+        pages.forEach(page => {
+            page.style.opacity = '0';
+            page.style.transform = 'translateY(-20px)';
+            setTimeout(() => page.remove(), 300);
+        });
         
+        // Показываем главную страницу
         const homePage = document.getElementById('home-page');
         if (homePage) {
             homePage.classList.add('active');
+            homePage.style.opacity = '1';
+            homePage.style.transform = 'translateY(0)';
         }
         
         this.currentPage = 'home';
         this.updateBugReportLink();
+        
+        // Звук возврата на главную
+        if (window.soundSystem) {
+            window.soundSystem.playInterface();
+        }
     }
     
     showChangelog() {
@@ -108,6 +221,10 @@ class App {
             window.changelogModule.show();
         } else {
             window.notifications?.error('Модуль логов недоступен');
+        }
+        
+        if (window.soundSystem) {
+            window.soundSystem.playInterface();
         }
     }
     
@@ -118,15 +235,18 @@ class App {
             // Игнорируем ошибки localStorage
         }
         
-        // Проверка каждые 10 секунд для быстрых webhook обновлений
+        // Проверка каждые 30 секунд для webhook обновлений
+        const checkInterval = window.RkMConfig?.intervals?.updateCheck || 30000;
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 10000);
+        }, checkInterval);
         
-        // Первая проверка через 2 секунды
+        // Первая проверка через 2 секунды после загрузки
         setTimeout(() => {
             this.checkForUpdates();
         }, 2000);
+        
+        console.log(`🔄 Мониторинг обновлений запущен (интервал: ${checkInterval/1000}с)`);
     }
     
     async checkForUpdates() {
@@ -139,7 +259,7 @@ class App {
             const result = await window.api.checkForUpdates();
             
             if (result && result.success && result.hasUpdate) {
-                console.log('Обновление!');
+                console.log('🆕 Обновление обнаружено!');
                 
                 // Сохраняем информацию о том что обновление обнаружено
                 try {
@@ -167,9 +287,12 @@ class App {
                 clearInterval(this.updateCheckInterval);
             }
             
+            // Увеличиваем интервал при ошибках
             this.updateCheckInterval = setInterval(() => {
                 this.checkForUpdates();
             }, 900000); // 15 минут при ошибках
+            
+            console.warn('⚠️ Ошибка проверки обновлений через backend, переход на fallback режим');
         }
     }
     
@@ -197,10 +320,12 @@ class App {
             });
             
             if (response.status === 403) {
+                console.warn('⚠️ GitHub API лимит превышен');
                 return;
             }
             
             if (response.status === 404) {
+                console.warn('⚠️ GitHub репозиторий не найден');
                 return;
             }
             
@@ -221,7 +346,7 @@ class App {
                 }
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    console.log('🆕 Получено обновление!');
+                    console.log('🆕 Обновление получено через GitHub!');
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
@@ -234,7 +359,7 @@ class App {
             }
             
         } catch (error) {
-            // Игнорируем ошибки fallback проверки
+            console.warn('⚠️ Ошибка fallback проверки через GitHub:', error.message);
         }
     }
     
@@ -319,7 +444,7 @@ class App {
         const shortSha = commitSha.substring(0, 7);
         
         document.body.innerHTML = `
-            <button onclick="window.open('https://github.com/AmKilopa/RkM/issues/new?title=HPR', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
+            <button onclick="window.open('${window.RkMConfig?.github?.getIssueUrl('home') || '#'}', '_blank')" class="bug-report-btn">🐛 Нашёл баг</button>
             <button onclick="window.changelogModule?.show()" class="changelog-btn">📋 Логи обновлений</button>
             
             <div id="notifications-container" class="notifications-container"></div>
@@ -343,7 +468,7 @@ class App {
                     
                     <div class="loading-section">
                         <div class="loading-spinner"></div>
-                        <p class="loading-text"></p>
+                        <p class="loading-text">Подготовка к перезагрузке...</p>
                         <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">Обновление получено</p>
                     </div>
                     
@@ -356,9 +481,9 @@ class App {
         
         this.reinitializeModules();
         
-        // СРАЗУ запускаем зацикленную мелодию
+        // Запускаем обновительную мелодию
         let melodyIntervalId = null;
-        if (window.soundSystem) {
+        if (window.soundSystem && window.soundSystem.startLoopingUpdateMelody) {
             melodyIntervalId = window.soundSystem.startLoopingUpdateMelody();
         }
         
@@ -379,6 +504,7 @@ class App {
             }
         };
         
+        console.log('🧪 Запуск тестового обновления...');
         this.handleNewUpdate(fakeCommit);
     }
     
@@ -408,13 +534,13 @@ class App {
         try {
             const connected = await window.api.testConnection();
             if (!connected) {
-                console.log('Backend недоступен');
+                console.log('🔴 Backend недоступен');
                 this.showOfflinePage();
             } else {
-                console.log('Backend доступен');
+                console.log('🟢 Backend доступен');
             }
         } catch (error) {
-            console.log('Backend недоступен');
+            console.log('🔴 Backend недоступен:', error.message);
             this.showOfflinePage();
         }
     }
@@ -432,23 +558,25 @@ class App {
             
             <div class="status-page offline-page">
                 <div class="main-container">
-                    <h1 class="main-title">📡 Сервер недоступен</h1>
+                    <div class="status-icon pulsing">📡</div>
+                    <h1 class="main-title">Сервер недоступен</h1>
                     <p class="offline-message">Backend сервер не отвечает</p>
                     
-                    <div class="offline-content">
-                        <div class="offline-info">
-                            <p>Ожидайте, в течение 5 минут</p>
-                            <p>Если сайт долго не работает, вы можете подать просьбу</p>
+                    <div class="commit-info">
+                        <h3>ℹ️ Информация:</h3>
+                        <div class="commit-message">Ожидайте восстановления в течение 5 минут</div>
+                        <div class="commit-details">
+                            <span>Если сайт долго не работает, вы можете подать просьбу</span>
                         </div>
-                        
-                        <div class="buttons-container">
-                            <button onclick="window.location.reload()" class="main-btn">
-                                🔄 Попробовать снова
-                            </button>
-                            <button onclick="window.open('${helpUrl}', '_blank')" class="main-btn">
-                                📝 Подать просьбу
-                            </button>
-                        </div>
+                    </div>
+                    
+                    <div class="buttons-container">
+                        <button onclick="window.location.reload()" class="main-btn">
+                            🔄 Попробовать снова
+                        </button>
+                        <button onclick="window.open('${helpUrl}', '_blank')" class="main-btn">
+                            📝 Подать просьбу
+                        </button>
                     </div>
                     
                     <div class="status-indicator">
@@ -461,28 +589,52 @@ class App {
         
         this.reinitializeModules();
         
+        // Автоматическая проверка восстановления backend
+        const retryInterval = window.RkMConfig?.intervals?.offlineRetry || 10000;
         setInterval(async () => {
             const connected = await window.api.testConnection();
             if (connected) {
-                console.log('Backend восстановлен');
+                console.log('🟢 Backend восстановлен');
                 window.location.reload();
             }
-        }, 10000);
+        }, retryInterval);
     }
     
     reinitializeModules() {
-        if (window.notifications) {
-            window.notifications.updateContainer();
-        }
-        if (window.modals) {
-            window.modals.setupEventListeners();
-        }
-        if (window.buttonSounds) {
-            window.buttonSounds.addSoundsToButtons();
-        }
+        // Переинициализируем модули после изменения DOM
+        setTimeout(() => {
+            if (window.notifications) {
+                window.notifications.updateContainer();
+            }
+            if (window.modals) {
+                window.modals.setupEventListeners();
+            }
+            if (window.buttonSounds) {
+                window.buttonSounds.refreshBindings();
+            }
+        }, 100);
+    }
+    
+    // Методы для разработки и отладки
+    debug() {
+        return {
+            currentPage: this.currentPage,
+            isUpdating: this.isUpdating,
+            updateCheckInterval: this.updateCheckInterval,
+            testUpdate: () => this.testUpdateSystem(),
+            checkUpdates: () => this.checkForUpdates(),
+            goHome: () => this.showHomePage()
+        };
     }
 }
 
+// Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
+    
+    // Добавляем debug методы в консоль для разработки
+    if (window.RkMConfig?.isDevelopment()) {
+        window.debugApp = () => window.app.debug();
+        console.log('🔧 Режим разработки: используйте debugApp() для отладки');
+    }
 });

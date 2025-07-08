@@ -43,7 +43,7 @@ let updateState = {
 
 // Проверка статуса сервера
 app.get('/api/status', (req, res) => {
-    console.log('📊 Запрос статуса сервера');
+  //  console.log('📊 Запрос статуса сервера');
     res.json({
         status: 'running',
         timestamp: new Date().toISOString(),
@@ -56,7 +56,7 @@ app.get('/api/status', (req, res) => {
 
 // Проверка обновлений (БЕЗ запросов к GitHub!)
 app.get('/api/updates/check', (req, res) => {
-    console.log('🔍 Проверка обновлений (через webhook состояние)');
+ //   console.log('🔍 Проверка обновлений (через webhook состояние)');
     
     try {
         // Возвращаем состояние основанное на webhook данных
@@ -71,18 +71,18 @@ app.get('/api/updates/check', (req, res) => {
         
         // Если есть обновление и оно не было уведомлено
         if (updateState.hasNewUpdate && !updateState.updateNotified) {
-            console.log('🆕 Отправляем уведомление об обновлении');
+        //    console.log('🆕 Отправляем уведомление об обновлении');
             updateState.updateNotified = true; // Помечаем как уведомленное
             
             // Через 30 секунд сбрасываем флаг (после того как фронтенд обработает)
             setTimeout(() => {
-                console.log('🔄 Сброс флага обновления');
+           //     console.log('🔄 Сброс флага обновления');
                 updateState.hasNewUpdate = false;
                 updateState.updateNotified = false;
             }, 30000);
         }
         
-        console.log('📊 Состояние обновлений:', {
+        console.log('Состояние обновлений:', {
             hasUpdate: result.hasUpdate,
             commit: result.latestCommit?.sha?.substring(0, 7) || 'none',
             webhookTime: result.webhookTime
@@ -91,7 +91,7 @@ app.get('/api/updates/check', (req, res) => {
         res.json(result);
         
     } catch (error) {
-        console.log('❌ Ошибка при проверке состояния:', error.message);
+       // console.log('❌ Ошибка при проверке состояния:', error.message);
         
         res.json({
             success: false,
