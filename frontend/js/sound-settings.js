@@ -100,6 +100,7 @@ class SoundSettings {
                 <h3 class="settings-section-title">🔊 Звуковые настройки</h3>
                 
                 <div class="setting-group">
+                    <h4 class="setting-group-title">Основные настройки</h4>
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Включить звуки</span>
@@ -108,10 +109,9 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Включает или отключает все звуки в приложении</p>
                     </div>
-                </div>
-                
-                <div class="setting-group">
+                    
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Общая громкость</span>
@@ -122,6 +122,7 @@ class SoundSettings {
                                 <span class="volume-value">${Math.round(this.settings.masterVolume * 100)}%</span>
                             </div>
                         </label>
+                        <p class="setting-description">Регулирует общую громкость всех звуков</p>
                     </div>
                 </div>
                 
@@ -136,6 +137,7 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Звуки при нажатии на кнопки</p>
                     </div>
                     
                     <div class="setting-item">
@@ -146,6 +148,7 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Звуки при появлении уведомлений</p>
                     </div>
                     
                     <div class="setting-item">
@@ -156,6 +159,7 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Звуки при взаимодействии с интерфейсом</p>
                     </div>
                     
                     <div class="setting-item">
@@ -166,6 +170,7 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Звуки при успешном выполнении действий</p>
                     </div>
                     
                     <div class="setting-item">
@@ -176,6 +181,7 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Звуки при возникновении ошибок</p>
                     </div>
                     
                     <div class="setting-item">
@@ -186,13 +192,15 @@ class SoundSettings {
                                 <span class="slider"></span>
                             </div>
                         </label>
+                        <p class="setting-description">Звуки при предупреждениях</p>
                     </div>
                 </div>
                 
                 <div class="setting-group">
+                    <h4 class="setting-group-title">Пакет звуков</h4>
                     <div class="setting-item">
                         <label class="setting-label">
-                            <span>Набор звуков</span>
+                            <span>Стиль звуков</span>
                             <select id="sound-pack" class="setting-select">
                                 <option value="pleasant" ${this.settings.soundPack === 'pleasant' ? 'selected' : ''}>Приятный</option>
                                 <option value="soft" ${this.settings.soundPack === 'soft' ? 'selected' : ''}>Мягкий</option>
@@ -200,6 +208,7 @@ class SoundSettings {
                                 <option value="professional" ${this.settings.soundPack === 'professional' ? 'selected' : ''}>Профессиональный</option>
                             </select>
                         </label>
+                        <p class="setting-description">Выберите стиль звуков, который вам больше нравится</p>
                     </div>
                 </div>
                 
@@ -207,7 +216,7 @@ class SoundSettings {
                     <button class="btn btn-primary" onclick="window.soundSettings.testAllSounds()">
                         🎵 Тест звуков
                     </button>
-                    <button class="btn btn-secondary" onclick="window.soundSettings.resetToDefaults()">
+                    <button class="btn btn-secondary" onclick="window.soundSettings.resetToDefaults(); window.notifications.success('Настройки звука сброшены');">
                         🔄 Сбросить
                     </button>
                 </div>
@@ -220,6 +229,11 @@ class SoundSettings {
         if (soundEnabled) {
             soundEnabled.addEventListener('change', (e) => {
                 this.setSetting('soundEnabled', e.target.checked);
+                if (e.target.checked) {
+                    window.notifications?.success('🔊 Звуки включены');
+                } else {
+                    window.notifications?.info('🔇 Звуки отключены');
+                }
             });
         }
         
@@ -252,13 +266,14 @@ class SoundSettings {
         if (soundPack) {
             soundPack.addEventListener('change', (e) => {
                 this.setSetting('soundPack', e.target.value);
+                window.notifications?.info(`🎵 Пакет звуков: ${e.target.options[e.target.selectedIndex].text}`);
             });
         }
     }
     
     testAllSounds() {
         if (!window.soundSystem || !this.settings.soundEnabled) {
-            window.notifications?.warning('Звуки отключены');
+            window.notifications?.warning('🔇 Звуки отключены');
             return;
         }
         
@@ -271,7 +286,7 @@ class SoundSettings {
             { name: 'Интерфейс', method: 'playInterface' }
         ];
         
-        window.notifications?.info('Тестирование звуков...', 6000);
+        window.notifications?.info('🎵 Тестирование звуков...', 6000);
         
         sounds.forEach((sound, index) => {
             setTimeout(() => {

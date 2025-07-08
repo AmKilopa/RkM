@@ -2,7 +2,7 @@
 class Settings {
     constructor() {
         this.currentSection = 'sound';
-        this.developerPassword = 'dev2024rkm';
+        this.developerPassword = null;
         this.isDeveloperUnlocked = false;
         this.sections = {
             'sound': {
@@ -39,7 +39,26 @@ class Settings {
         };
         
         this.loadSettings();
+        this.loadDeveloperPassword();
         this.setupEventListeners();
+    }
+    
+    async loadDeveloperPassword() {
+        try {
+            const response = await fetch('js/.env');
+            const envText = await response.text();
+            const lines = envText.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('DEVELOPER_PASSWORD=')) {
+                    this.developerPassword = line.split('=')[1].trim();
+                    return;
+                }
+            }
+        } catch (error) {
+            // Файл не найден или ошибка чтения
+        }
+        this.developerPassword = null;
     }
     
     loadSettings() {
@@ -95,11 +114,32 @@ class Settings {
     }
     
     openSettings() {
+        // Проверяем что окно не открыто уже
+        if (document.querySelector('.settings-modal')) {
+            return;
+        }
+        
         const modal = this.createSettingsModal();
         document.body.appendChild(modal);
         
         setTimeout(() => {
             modal.classList.add('active');
+            
+            // Обработчик клика по оверлею для закрытия
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeSettings();
+                }
+            });
+            
+            // Обработчик ESC для закрытия
+            const handleEsc = (e) => {
+                if (e.key === 'Escape') {
+                    this.closeSettings();
+                    document.removeEventListener('keydown', handleEsc);
+                }
+            };
+            document.addEventListener('keydown', handleEsc);
         }, 10);
         
         this.bindSettingsEvents();
@@ -109,6 +149,14 @@ class Settings {
         }
     }
     
+    closeSettings() {
+        const settingsModals = document.querySelectorAll('.settings-modal');
+        settingsModals.forEach(modal => {
+            modal.remove();
+        });
+        document.body.style.overflow = '';
+    }
+    
     createSettingsModal() {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay settings-modal';
@@ -116,7 +164,7 @@ class Settings {
             <div class="modal">
                 <div class="settings-header">
                     <h2 class="modal-title">⚙️ Настройки</h2>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove(); document.body.style.overflow = '';">×</button>
+                    <button class="modal-close" onclick="window.settings.closeSettings();">×</button>
                 </div>
                 
                 <div class="settings-container">
@@ -139,14 +187,30 @@ class Settings {
         
         Object.entries(this.sections).forEach(([key, section]) => {
             if (section.active) {
-                if (key === 'developer' && !this.isDeveloperUnlocked) {
-                    html += `
-                        <button class="settings-tab developer-locked" 
-                                data-section="${key}">
-                            <span class="tab-icon">🔒</span>
-                            <span class="tab-text">${section.title}</span>
-                        </button>
-                    `;
+                if (key === 'developer') {
+                    // Показываем кнопку разработчика только если есть пароль в .env
+                    if (!this.developerPassword) {
+                        return; // Пропускаем кнопку если нет пароля
+                    }
+                    
+                    if (!this.isDeveloperUnlocked) {
+                        html += `
+                            <button class="settings-tab developer-locked" 
+                                    data-section="${key}"
+                                    title="Требуется авторизация">
+                                <span class="tab-icon">🔒</span>
+                                <span class="tab-text">${section.title}</span>
+                            </button>
+                        `;
+                    } else {
+                        html += `
+                            <button class="settings-tab developer-unlocked ${key === this.currentSection ? 'active' : ''}" 
+                                    data-section="${key}">
+                                <span class="tab-icon">🔓</span>
+                                <span class="tab-text">${section.title}</span>
+                            </button>
+                        `;
+                    }
                 } else {
                     html += `
                         <button class="settings-tab ${key === this.currentSection ? 'active' : ''}" 
@@ -172,7 +236,7 @@ class Settings {
             case 'performance':
                 return this.createPerformanceSettings();
             case 'developer':
-                return this.isDeveloperUnlocked ? this.createDeveloperSettings() : this.createDeveloperLogin();
+                return this.isDeveloperUnlocked ? this.createDeveloperSettings() : this.createPlaceholder('Доступ запрещён');
             default:
                 return this.createPlaceholder('Раздел не найден');
         }
@@ -280,45 +344,6 @@ class Settings {
         `;
     }
     
-    createDeveloperLogin() {
-        return `
-            <div class="settings-section" id="developer-login">
-                <h3 class="settings-section-title">🔒 Доступ разработчика</h3>
-                
-                <div class="setting-group">
-                    <div class="developer-login-form">
-                        <p style="color: var(--text-muted); margin-bottom: 2rem; text-align: center; font-size: 1.1rem;">
-                            Для доступа к инструментам разработчика требуется авторизация
-                        </p>
-                        
-                        <div class="form-container">
-                            <div class="form-group">
-                                <label class="form-label">🔐 Пароль разработчика</label>
-                                <input type="password" 
-                                       id="developer-password" 
-                                       class="form-input" 
-                                       placeholder="Введите пароль..." 
-                                       autocomplete="off">
-                            </div>
-                            
-                            <div class="form-group">
-                                <button class="btn btn-primary" onclick="window.settings.unlockDeveloper()">
-                                    🔓 Войти в режим разработчика
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border-left: 4px solid #ffc107;">
-                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
-                                ⚠️ Инструменты разработчика предназначены для продвинутых пользователей
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
     createDeveloperSettings() {
         return `
             <div class="settings-section" id="developer-settings">
@@ -412,6 +437,8 @@ class Settings {
                 const section = e.currentTarget.dataset.section;
                 
                 if (section === 'developer' && !this.isDeveloperUnlocked) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     this.promptDeveloperPassword();
                     return;
                 }
@@ -427,16 +454,6 @@ class Settings {
         
         // Общие настройки
         this.bindGeneralSettings();
-        
-        // Пароль разработчика
-        const passwordInput = document.getElementById('developer-password');
-        if (passwordInput) {
-            passwordInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    this.unlockDeveloper();
-                }
-            });
-        }
     }
     
     bindGeneralSettings() {
@@ -478,7 +495,7 @@ class Settings {
     promptDeveloperPassword() {
         // Создаем модальное окно для ввода пароля
         const passwordModal = `
-            <div class="modal password-modal">
+            <div class="modal password-modal" style="z-index: 10000;">
                 <div class="modal-header">
                     <h3 class="modal-title">🔐 Авторизация разработчика</h3>
                     <button onclick="window.modals.hide()" class="modal-close">&times;</button>
@@ -530,31 +547,6 @@ class Settings {
             window.modals.hide();
             
             // Обновляем сайдбар
-            const sidebar = document.querySelector('.settings-sidebar');
-            if (sidebar) {
-                sidebar.innerHTML = this.createSettingsSidebar();
-                this.bindSettingsEvents();
-            }
-            
-            this.switchSection('developer');
-            
-            window.notifications?.success('🎉 Доступ разработчика получен!');
-            if (window.soundSystem) {
-                window.soundSystem.playSuccess();
-            }
-        } else {
-            window.notifications?.error('❌ Неверный пароль');
-            if (window.soundSystem) {
-                window.soundSystem.playError();
-            }
-        }
-    }
-    
-    unlockDeveloper() {
-        const passwordInput = document.getElementById('developer-password');
-        if (passwordInput && passwordInput.value === this.developerPassword) {
-            this.isDeveloperUnlocked = true;
-            
             const sidebar = document.querySelector('.settings-sidebar');
             if (sidebar) {
                 sidebar.innerHTML = this.createSettingsSidebar();

@@ -1,4 +1,4 @@
-/* === НАСТРОЙКИ === */
+/* === СТИЛИ НАСТРОЕК === */
 
 /* Модальное окно настроек */
 .settings-modal .modal {
@@ -7,8 +7,16 @@
     max-height: 90vh;
     padding: 0;
     overflow: hidden;
+    border-radius: var(--border-radius-xl);
+    background: var(--gradient-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: 
+        0 50px 100px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 var(--shadow-light);
+    backdrop-filter: blur(30px);
 }
 
+/* Заголовок настроек */
 .settings-header {
     padding: 2rem;
     border-bottom: 1px solid var(--border-color);
@@ -19,6 +27,66 @@
     position: relative;
 }
 
+.settings-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow), var(--accent-red));
+    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+}
+
+.settings-header .modal-title {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 400;
+    background: linear-gradient(45deg, #fff, var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* КРЕСТИК ЗАКРЫТИЯ - ИСПРАВЛЕНО */
+.settings-header .modal-close {
+    position: absolute !important;
+    top: 50% !important;
+    right: 2rem !important;
+    transform: translateY(-50%) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-size: 1.8rem !important;
+    cursor: pointer !important;
+    transition: all var(--transition-normal) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 1000 !important;
+    font-family: Arial, sans-serif !important;
+    line-height: 1 !important;
+    font-weight: normal !important;
+    text-align: center !important;
+}
+
+.settings-header .modal-close:hover {
+    color: var(--text-primary) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-50%) scale(1.1) !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2) !important;
+}
+
+.settings-header .modal-close:active {
+    transform: translateY(-50%) scale(0.95) !important;
+}
+
+/* Контейнер настроек */
 .settings-container {
     display: flex;
     height: calc(90vh - 200px);
@@ -90,8 +158,29 @@
 }
 
 .settings-tab.developer-locked {
-    opacity: 0.6;
-    cursor: not-allowed;
+    opacity: 0.7;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.settings-tab.developer-locked:hover {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--accent-yellow);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+    transform: translateX(5px) scale(1.02);
+}
+
+.settings-tab.developer-unlocked {
+    opacity: 1;
+    cursor: pointer;
+    color: var(--accent-green);
+}
+
+.settings-tab.developer-unlocked:hover {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--accent-green);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+    transform: translateX(5px) scale(1.02);
 }
 
 .tab-icon {
@@ -373,28 +462,112 @@ input:checked + .slider:before {
 
 /* Форма логина разработчика */
 .developer-login-form {
-    max-width: 400px;
+    max-width: 500px;
     margin: 0 auto;
     text-align: center;
 }
 
-.developer-login-form .setting-item {
-    margin-bottom: 2rem;
+.developer-login-form .form-container {
+    background: var(--gradient-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
 }
 
-.developer-login-form .setting-label {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+.developer-login-form .form-group {
+    margin-bottom: 1.5rem;
     text-align: left;
 }
 
-/* === RESPONSIVE === */
+.developer-login-form .form-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.developer-login-form .form-input {
+    width: 100%;
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+}
+
+.developer-login-form .form-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 
+        0 0 0 3px rgba(0, 123, 255, 0.25),
+        0 8px 25px rgba(0, 123, 255, 0.1);
+    background: rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.developer-login-form .btn {
+    background: var(--gradient-glow);
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all var(--transition-normal);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.developer-login-form .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.developer-login-form .btn:hover::before {
+    left: 100%;
+}
+
+.developer-login-form .btn:hover {
+    background: linear-gradient(145deg, #0056b3, #004085);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 123, 255, 0.4);
+}
+
+/* === АДАПТИВНЫЕ СТИЛИ === */
 @media (max-width: 768px) {
     .settings-modal .modal {
         width: 98%;
         margin: 1%;
         max-height: 95vh;
+    }
+    
+    .settings-header {
+        padding: 1.5rem;
+        position: relative;
+    }
+    
+    .settings-header .modal-close {
+        right: 1.5rem !important;
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 1.5rem !important;
     }
     
     .settings-container {
@@ -441,14 +614,25 @@ input:checked + .slider:before {
         flex-direction: column;
     }
     
-    .developer-login-form .setting-label {
-        align-items: stretch;
+    .developer-login-form {
+        max-width: 100%;
+    }
+    
+    .developer-login-form .form-container {
+        padding: 1.5rem;
     }
 }
 
 @media (max-width: 480px) {
     .settings-header {
-        padding: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .settings-header .modal-close {
+        right: 1rem !important;
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 1.3rem !important;
     }
     
     .settings-content {
@@ -473,28 +657,30 @@ input:checked + .slider:before {
         padding: 10px 20px;
         font-size: 0.9rem;
     }
-}
-
-/* === СОСТОЯНИЯ === */
-.compact-mode .setting-group {
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-.compact-mode .setting-item {
-    margin-bottom: 1rem;
-}
-
-.performance-mode .settings-modal .modal {
-    backdrop-filter: none;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.performance-mode .setting-group {
-    backdrop-filter: none;
+    
+    .developer-login-form .form-container {
+        padding: 1rem;
+    }
+    
+    .developer-login-form .form-input,
+    .developer-login-form .btn {
+        padding: 14px 18px;
+        font-size: 1rem;
+    }
 }
 
 /* === АНИМАЦИИ === */
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 0.6; 
+        transform: scale(1); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.05); 
+    }
+}
+
 @keyframes settingsSlideIn {
     from {
         opacity: 0;

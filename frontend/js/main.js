@@ -69,20 +69,9 @@ class App {
             if (e.target.classList.contains('back-btn')) {
                 this.showHomePage();
             }
-            
-            // Обработчик закрытия модального окна настроек
-            if (e.target.classList.contains('modal-close') || 
-                (e.target.classList.contains('modal-overlay') && e.target === e.currentTarget)) {
-                this.closeSettings();
-            }
         });
         
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeSettings();
-                this.showHomePage();
-            }
-            
+        document.addEventListener('keydown', (e) => {            
             if (e.ctrlKey && e.key === 'r') {
                 e.preventDefault();
                 this.checkForUpdates();
@@ -158,6 +147,11 @@ class App {
 
     // === МЕТОДЫ ДЛЯ НАСТРОЕК ===
     showSettings() {
+        // Проверяем что окно уже не открыто
+        if (document.querySelector('.settings-modal')) {
+            return;
+        }
+        
         if (window.settings) {
             window.settings.openSettings();
         } else {
@@ -170,11 +164,11 @@ class App {
     }
 
     closeSettings() {
-        const settingsModal = document.querySelector('.settings-modal');
-        if (settingsModal) {
-            settingsModal.remove();
-            document.body.style.overflow = '';
-        }
+        const settingsModals = document.querySelectorAll('.settings-modal');
+        settingsModals.forEach(modal => {
+            modal.remove();
+        });
+        document.body.style.overflow = '';
     }
 
     updateBugReportLink() {
