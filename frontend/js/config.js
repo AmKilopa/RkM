@@ -40,7 +40,7 @@ window.RkMConfig = {
         }
     },
     
-    // Интервалы проверок (в миллисекундах)
+    // Интервалы проверок
     intervals: {
         updateCheck: 30000,
         backendCheck: 10000,
@@ -154,9 +154,7 @@ window.RkMConfig = {
 class ApiClient {
     constructor() {
         this.baseUrl = this.getBackendUrl();
-        this.lastCommitSha = null;
         this.backendAvailable = null;
-        this.corsSupported = null;
     }
     
     getBackendUrl() {
@@ -183,8 +181,6 @@ class ApiClient {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache',
                 ...options.headers
             },
             credentials: 'include',
@@ -207,21 +203,16 @@ class ApiClient {
         }
     }
     
-    // === УЛУЧШЕННАЯ ПРОВЕРКА ОБНОВЛЕНИЙ ===
+    // === ПРОВЕРКА ОБНОВЛЕНИЙ ===
     async checkForUpdates() {
         try {
-            console.log('🔍 Проверка обновлений через backend...');
-            
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 секунд timeout
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
             
             const response = await fetch(`${this.baseUrl}/updates/check`, {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
+                    'Accept': 'application/json'
                 },
                 credentials: 'include',
                 mode: 'cors',
@@ -232,10 +223,9 @@ class ApiClient {
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Backend ответ получен:', result.success ? 'успешно' : 'с ошибкой');
                 
                 if (result.success && result.hasUpdate) {
-                    console.log('🆕 Найдено обновление через backend!');
+                    console.log('☑️ Обновление получено');
                     return {
                         success: true,
                         hasUpdate: true,
@@ -254,16 +244,12 @@ class ApiClient {
             }
             
         } catch (error) {
-            console.log('❌ Backend недоступен:', error.message);
-            
-            // Если это CORS ошибка или сеть недоступна, пробуем GitHub API
             if (error.message.includes('CORS') || 
                 error.message.includes('Failed to fetch') ||
                 error.message.includes('ERR_FAILED') ||
                 error.message.includes('blocked') ||
                 error.name === 'AbortError') {
                 
-                console.log('🔄 Переключаемся на GitHub API...');
                 return await this.checkForUpdatesGitHub();
             }
             
@@ -275,13 +261,10 @@ class ApiClient {
     async checkForUpdatesGitHub() {
         const config = window.RkMConfig?.github;
         if (!config) {
-            console.log('❌ GitHub конфиг не найден');
             return { success: false, error: 'No GitHub config' };
         }
         
         try {
-            console.log('🔍 Проверка обновлений через GitHub API...');
-            
             const timestamp = Date.now();
             const randomParam = Math.random().toString(36).substring(7);
             const url = `${config.apiUrl}/commits?per_page=1&_t=${timestamp}&_r=${randomParam}`;
@@ -289,22 +272,13 @@ class ApiClient {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                },
-                cache: 'no-store'
+                    'Accept': 'application/vnd.github.v3+json'
+                }
             });
             
-            if (response.status === 403) {
-                console.log('⚠️ GitHub API rate limit или требуется авторизация');
-                return { success: false, error: 'GitHub API rate limit' };
-            }
-            
-            if (response.status === 404) {
-                console.log('⚠️ Репозиторий не найден или недоступен');
-                return { success: false, error: 'Repository not found' };
+            if (response.status === 403 || response.status === 404) {
+                console.log('❌ Ошибка GitHub API: ' + (response.status === 403 ? 'Rate limit' : 'Not found'));
+                return { success: false, error: 'GitHub API error' };
             }
             
             if (!response.ok) {
@@ -316,7 +290,6 @@ class ApiClient {
             if (commits && commits[0]) {
                 const latestCommit = commits[0];
                 
-                // Проверяем сохраненный коммит
                 let storedCommit = null;
                 try {
                     storedCommit = localStorage.getItem('rkm_last_commit');
@@ -325,8 +298,7 @@ class ApiClient {
                 }
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    // Найдено обновление!
-                    console.log('🆕 Найдено обновление через GitHub API!');
+                    console.log('☑️ Обновление получено');
                     
                     try {
                         localStorage.setItem('rkm_update_detected', JSON.stringify({
@@ -349,13 +321,11 @@ class ApiClient {
                         source: 'github'
                     };
                 } else if (!storedCommit) {
-                    // Первый запуск - сохраняем текущий коммит
                     try {
                         localStorage.setItem('rkm_last_commit', latestCommit.sha);
                     } catch (e) {
                         sessionStorage.setItem('rkm_last_commit', latestCommit.sha);
                     }
-                    console.log('💾 Сохранен текущий коммит для отслеживания');
                 }
                 
                 return {
@@ -369,7 +339,7 @@ class ApiClient {
             return { success: false, error: 'No commits found' };
             
         } catch (error) {
-            console.log('❌ Ошибка GitHub API:', error.message);
+            console.log('❌ Ошибка GitHub API: ' + error.message);
             return { success: false, error: error.message };
         }
     }
@@ -378,24 +348,20 @@ class ApiClient {
         return this.request('/updates/latest-commit', { method: 'GET' });
     }
     
-    // === УЛУЧШЕННАЯ ПРОВЕРКА СОЕДИНЕНИЯ ===
+    // === ПРОВЕРКА СОЕДИНЕНИЯ ===
     async testConnection() {
         const maxRetries = 3;
-        const retryDelay = 1000; // 1 секунда
+        const retryDelay = 1000;
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.log(`🔍 Попытка подключения к backend ${attempt}/${maxRetries}`);
-                
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 секунд timeout
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
                 
                 const response = await fetch(`${this.baseUrl}/status`, {
                     method: 'GET',
                     headers: {
-                        'Accept': 'application/json',
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
+                        'Accept': 'application/json'
                     },
                     credentials: 'include',
                     mode: 'cors',
@@ -406,14 +372,9 @@ class ApiClient {
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Backend подключен:', data.status);
-                    console.log('🔧 CORS статус:', data.cors || 'не указан');
-                    
                     this.backendAvailable = true;
-                    this.corsSupported = true;
                     return true;
                 } else {
-                    console.log(`⚠️ Backend ответил с кодом: ${response.status}`);
                     if (attempt === maxRetries) {
                         this.backendAvailable = false;
                         return false;
@@ -421,22 +382,11 @@ class ApiClient {
                 }
                 
             } catch (error) {
-                console.log(`❌ Ошибка подключения (попытка ${attempt}):`, error.message);
-                
-                // Специальная обработка CORS ошибок
-                if (error.message.includes('CORS') || error.message.includes('Access-Control')) {
-                    console.log('🚫 CORS ошибка - проверьте настройки backend');
-                    console.log('🔧 Убедитесь что backend включает домен:', window.location.origin);
-                    this.corsSupported = false;
-                }
-                
-                // Если это последняя попытка, возвращаем false
                 if (attempt === maxRetries) {
                     this.backendAvailable = false;
                     return false;
                 }
                 
-                // Ждем перед следующей попыткой
                 await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
             }
         }
@@ -448,8 +398,6 @@ class ApiClient {
     // === CORS ДИАГНОСТИКА ===
     async testCorsConnection() {
         try {
-            console.log('🔧 Тестирование CORS соединения...');
-            
             const response = await fetch(`${this.baseUrl}/cors-test`, {
                 method: 'GET',
                 headers: {
@@ -461,27 +409,19 @@ class ApiClient {
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('🔧 CORS тест результат:', data);
-                this.corsSupported = data.allowed;
                 return data;
             } else {
-                console.log('🔧 CORS тест неудачен:', response.status);
-                this.corsSupported = false;
                 return null;
             }
             
         } catch (error) {
-            console.log('🔧 CORS тест ошибка:', error.message);
-            this.corsSupported = false;
             return null;
         }
     }
     
-    // === ПРОВЕРКА СОСТОЯНИЯ СИСТЕМЫ ===
     getSystemStatus() {
         return {
             backendAvailable: this.backendAvailable,
-            corsSupported: this.corsSupported,
             currentDomain: window.location.origin,
             backendUrl: this.baseUrl
         };
@@ -659,7 +599,6 @@ window.diagnoseCORSIssues = async function() {
     console.log('\n📊 ИТОГОВЫЙ СТАТУС:');
     const status = window.api.getSystemStatus();
     console.log('🔗 Backend доступен:', status.backendAvailable);
-    console.log('🌐 CORS поддерживается:', status.corsSupported);
     console.log('📍 Домен:', status.currentDomain);
     console.log('🔧 Backend URL:', status.backendUrl);
     
@@ -670,30 +609,18 @@ window.diagnoseCORSIssues = async function() {
 
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Инициализация API клиента...');
-    
     window.api = new ApiClient();
     window.authSystem = new AuthSystem();
     window.modals = new ModalSystem();
     
     // Тихая проверка соединения
-    console.log('🔍 Проверка подключения к backend...');
     const connected = await window.api.testConnection();
     
     if (connected) {
-        console.log('🟢 Backend подключен');
-        
-        // Автоматическая CORS диагностика в production
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            setTimeout(async () => {
-                await window.api.testCorsConnection();
-            }, 2000);
-        }
+        console.log('🟢 Backend доступен');
     } else {
         console.log('🔴 Backend недоступен');
     }
-    
-   // console.log('✅ Инициализация завершена');
 });
 
 window.config = window.RkMConfig;
