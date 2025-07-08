@@ -130,7 +130,7 @@ class App {
             console.log('⚠️ Проблемы с localStorage, используем временное хранение');
         }
         
-        // Проверяем обновления каждые 30 секунд (для быстрой реакции на webhook)
+        // Проверяем обновления каждые 30 секунд тест
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
         }, 120000); // 2 минуты
