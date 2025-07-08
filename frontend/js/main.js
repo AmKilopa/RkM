@@ -13,11 +13,32 @@ class App {
             return;
         }
         
+        // Показываем уведомление об обновлении если было
+        this.showUpdateNotification();
+        
         this.clearApiCache();
         this.setupEventListeners();
         this.updateBugReportLink();
         this.startUpdateMonitoring();
         this.checkBackendStatus();
+    }
+    
+    showUpdateNotification() {
+        try {
+            const updateInfo = localStorage.getItem('rkm_update_detected');
+            if (updateInfo) {
+                localStorage.removeItem('rkm_update_detected');
+                
+                // Ждем загрузки системы уведомлений
+                setTimeout(() => {
+                    if (window.notifications) {
+                        window.notifications.success('✅ Сайт успешно обновлён!', 5000);
+                    }
+                }, 1000);
+            }
+        } catch (e) {
+            // Игнорируем ошибки localStorage
+        }
     }
     
     clearApiCache() {
@@ -319,15 +340,25 @@ class App {
                 }
                 
                 if (storedCommit && storedCommit !== latestCommit.sha) {
-                    const now = new Date();
-                    const dateStr = now.toLocaleDateString('ru-RU');
-                    const timeStr = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
-                    const commitShort = latestCommit.sha.substring(0, 7);
+                    // Найдено обновление!
+                    try {
+                        localStorage.setItem('rkm_update_detected', JSON.stringify({
+                            timestamp: new Date().toISOString(),
+                            commit: latestCommit.sha,
+                            message: latestCommit.commit.message
+                        }));
+                    } catch (e) {
+                        sessionStorage.setItem('rkm_update_detected', JSON.stringify({
+                            timestamp: new Date().toISOString(),
+                            commit: latestCommit.sha,
+                            message: latestCommit.commit.message
+                        }));
+                    }
                     
-                    console.log(`🆕 Обновление ${dateStr} / ${timeStr} \\ #${commitShort}`);
                     this.handleNewUpdate(latestCommit);
                     return;
                 } else if (!storedCommit) {
+                    // Первый запуск - сохраняем текущий коммит
                     try {
                         localStorage.setItem('rkm_last_commit', latestCommit.sha);
                     } catch (e) {
@@ -561,8 +592,24 @@ class App {
     
     // Тест обновления для разработчиков
     testUpdateSystem() {
+        // Сохраняем фейковое обновление
+        try {
+            localStorage.setItem('rkm_update_detected', JSON.stringify({
+                timestamp: new Date().toISOString(),
+                commit: 'test123456',
+                message: 'Тестовое обновление системы'
+            }));
+        } catch (e) {
+            sessionStorage.setItem('rkm_update_detected', JSON.stringify({
+                timestamp: new Date().toISOString(),
+                commit: 'test123456',
+                message: 'Тестовое обновление системы'
+            }));
+        }
+        
+        // Имитируем страницу обновления
         const fakeCommit = {
-            sha: 'test1234567',
+            sha: 'test123456',
             commit: {
                 message: 'Тестовое обновление системы',
                 author: {
@@ -572,18 +619,29 @@ class App {
             }
         };
         
-        this.handleNewUpdate(fakeCommit);
+        this.showUpdatePage(fakeCommit);
+    }
+    
+    // Тест уведомлений
+    testNotifications() {
+        if (window.notifications) {
+            window.notifications.success('✅ Тест успешного уведомления');
+            setTimeout(() => {
+                window.notifications.info('ℹ️ Тест информационного уведомления');
+            }, 1000);
+            setTimeout(() => {
+                window.notifications.warning('⚠️ Тест предупреждения');
+            }, 2000);
+            setTimeout(() => {
+                window.notifications.error('❌ Тест ошибки');
+            }, 3000);
+        } else {
+            alert('Система уведомлений не загружена!');
+        }
     }
 }
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
-    // Сообщение о получении обновления после перезагрузки
-    const updateInfo = localStorage.getItem('rkm_update_detected');
-    if (updateInfo) {
-        localStorage.removeItem('rkm_update_detected');
-        console.log('☑️ Обновление получено');
-    }
-    
     window.app = new App();
 });
