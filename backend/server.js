@@ -818,23 +818,3 @@ class App {
         }
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
-    console.log('🚀 RkM приложение запущено');
-    console.log('🔗 Backend: https://rkm-9vui.onrender.com');
-    console.log('🧪 Тестовые функции:');
-    console.log('  window.app.testUpdateSystem() - тест UI уведомления');
-    console.log('  window.app.testForceUpdate() - принудительный флаг на backend');
-    
-    // Добавляем информацию о браузере для диагностики
-    console.log('🌐 Браузер:', navigator.userAgent);
-    console.log('🔄 Поддержка localStorage:', typeof(Storage) !== "undefined");
-});
-
-// Очистка при закрытии страницы
-window.addEventListener('beforeunload', () => {
-    if (window.app) {
-        window.app.destroy();
-    }
-});
