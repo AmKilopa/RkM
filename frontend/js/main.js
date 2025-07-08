@@ -130,17 +130,17 @@ class App {
             console.log('⚠️ Проблемы с localStorage, используем временное хранение');
         }
         
-        // Проверяем обновления каждые 5 секунд (для быстрой реакции на webhook)
+        // Проверяем обновления каждые 30 секунд (для быстрой реакции на webhook)
         this.updateCheckInterval = setInterval(() => {
             this.checkForUpdates();
-        }, 5000); // 5 секунд
+        }, 30000); // 30 секунд
         
-        // Первая проверка через 3 секунд
+        // Первая проверка через 5 секунд
         setTimeout(() => {
             this.checkForUpdates();
-        }, 3000);
+        }, 5000);
         
-        console.log('⏰ Мониторинг настроен: проверка через backend каждые 5 секунд, первая через 3 секунд');
+        console.log('⏰ Мониторинг настроен: проверка через backend каждые 30 секунд, первая через 5 секунд');
     }
     
     async checkForUpdates() {
@@ -150,21 +150,35 @@ class App {
         }
         
         console.log('🔍 Проверяем обновления через backend...');
+        console.log('🕐 Время проверки:', new Date().toLocaleTimeString());
         
         try {
             // Проверяем обновления через backend
             const result = await window.api.checkForUpdates();
             
-            console.log('📊 Ответ backend:', result);
+            console.log('📊 Полный ответ backend:', JSON.stringify(result, null, 2));
             
             if (result && result.success && result.hasUpdate) {
                 console.log('🆕 BACKEND СООБЩАЕТ О НОВОМ ОБНОВЛЕНИИ!');
-                console.log('📝 Новый коммит:', result.latestCommit);
+                console.log('📝 Данные коммита:', result.latestCommit);
+                console.log('🔔 Источник:', result.source);
+                
+                // Сохраняем информацию о том что обновление обнаружено
+                try {
+                    localStorage.setItem('rkm_update_detected', JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        commit: result.latestCommit
+                    }));
+                } catch (e) {
+                    console.log('⚠️ Не удалось сохранить информацию об обновлении');
+                }
                 
                 this.handleNewUpdate(result.latestCommit);
                 return;
             } else if (result && result.success) {
                 console.log('✅ Новых обновлений нет');
+                console.log('📝 Текущий коммит:', result.latestCommit?.sha?.substring(0, 7) || 'unknown');
+                console.log('🔔 Источник:', result.source);
             } else {
                 console.log('⚠️ Backend не смог проверить обновления:', result?.error || 'unknown error');
             }
@@ -555,7 +569,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
     console.log('🚀 RkM приложение запущено');
     console.log('🔗 Backend: https://rkm-9vui.onrender.com');
-    console.log('🧪 Для тестирования системы обновления используйте: window.app.testUpdateSystem()');
+    console.log('🧪 Тестовые функции:');
+    console.log('  window.app.testUpdateSystem() - тест UI уведомления');
+    console.log('  window.app.testForceUpdate() - принудительный флаг на backend');
     
     // Добавляем информацию о браузере для диагностики
     console.log('🌐 Браузер:', navigator.userAgent);
