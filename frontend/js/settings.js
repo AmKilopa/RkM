@@ -2,17 +2,17 @@
 class Settings {
     constructor() {
         this.currentSection = 'sound';
-        this.developerPassword = null;
+        this.developerPassword = 'dev2024rkm';
         this.isDeveloperUnlocked = false;
         this.sections = {
             'sound': {
                 title: '🔊 Звук',
-                icon: '🔊',
+                icon: '🎵',
                 active: true
             },
             'interface': {
                 title: '🖥️ Интерфейс',
-                icon: '🖥️',
+                icon: '🎨',
                 active: true
             },
             'performance': {
@@ -22,7 +22,7 @@ class Settings {
             },
             'developer': {
                 title: '🔧 Разработчик',
-                icon: '🔧',
+                icon: '👨‍💻',
                 active: true,
                 requiresPassword: true
             }
@@ -39,25 +39,7 @@ class Settings {
         };
         
         this.loadSettings();
-        this.loadDeveloperPassword();
         this.setupEventListeners();
-    }
-    
-    async loadDeveloperPassword() {
-        try {
-            const response = await fetch('js/.env');
-            const envText = await response.text();
-            const lines = envText.split('\n');
-            
-            for (const line of lines) {
-                if (line.startsWith('DEVELOPER_PASSWORD=')) {
-                    this.developerPassword = line.split('=')[1].trim();
-                    break;
-                }
-            }
-        } catch (error) {
-            this.developerPassword = 'dev2024rkm';
-        }
     }
     
     loadSettings() {
@@ -131,10 +113,10 @@ class Settings {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay settings-modal';
         modal.innerHTML = `
-            <div class="modal settings-modal-content">
+            <div class="modal">
                 <div class="settings-header">
                     <h2 class="modal-title">⚙️ Настройки</h2>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove(); document.body.style.overflow = '';">×</button>
                 </div>
                 
                 <div class="settings-container">
@@ -202,6 +184,7 @@ class Settings {
                 <h3 class="settings-section-title">🖥️ Настройки интерфейса</h3>
                 
                 <div class="setting-group">
+                    <h4 class="setting-group-title">Внешний вид</h4>
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Анимации</span>
@@ -212,9 +195,7 @@ class Settings {
                         </label>
                         <p class="setting-description">Включает плавные анимации и переходы</p>
                     </div>
-                </div>
-                
-                <div class="setting-group">
+                    
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Компактный режим</span>
@@ -225,9 +206,7 @@ class Settings {
                         </label>
                         <p class="setting-description">Уменьшает отступы и размеры элементов интерфейса</p>
                     </div>
-                </div>
-                
-                <div class="setting-group">
+                    
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Показывать подсказки</span>
@@ -241,9 +220,10 @@ class Settings {
                 </div>
                 
                 <div class="setting-group">
+                    <h4 class="setting-group-title">Уведомления</h4>
                     <div class="setting-item">
                         <label class="setting-label">
-                            <span>Уведомления</span>
+                            <span>Системные уведомления</span>
                             <div class="toggle-switch">
                                 <input type="checkbox" id="notifications-enabled" ${this.settings.notifications ? 'checked' : ''}>
                                 <span class="slider"></span>
@@ -262,6 +242,7 @@ class Settings {
                 <h3 class="settings-section-title">⚡ Настройки производительности</h3>
                 
                 <div class="setting-group">
+                    <h4 class="setting-group-title">Оптимизация</h4>
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Режим производительности</span>
@@ -272,9 +253,7 @@ class Settings {
                         </label>
                         <p class="setting-description">Отключает некоторые визуальные эффекты для улучшения производительности</p>
                     </div>
-                </div>
-                
-                <div class="setting-group">
+                    
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Автосохранение</span>
@@ -285,9 +264,7 @@ class Settings {
                         </label>
                         <p class="setting-description">Автоматически сохраняет настройки при изменении</p>
                     </div>
-                </div>
-                
-                <div class="setting-group">
+                    
                     <div class="setting-item">
                         <label class="setting-label">
                             <span>Автообновления</span>
@@ -310,21 +287,31 @@ class Settings {
                 
                 <div class="setting-group">
                     <div class="developer-login-form">
-                        <p style="color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">
-                            Для доступа к настройкам разработчика введите пароль
+                        <p style="color: var(--text-muted); margin-bottom: 2rem; text-align: center; font-size: 1.1rem;">
+                            Для доступа к инструментам разработчика требуется авторизация
                         </p>
                         
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <span>Пароль</span>
-                                <input type="password" id="developer-password" class="setting-input" placeholder="Введите пароль разработчика">
-                            </label>
+                        <div class="form-container">
+                            <div class="form-group">
+                                <label class="form-label">🔐 Пароль разработчика</label>
+                                <input type="password" 
+                                       id="developer-password" 
+                                       class="form-input" 
+                                       placeholder="Введите пароль..." 
+                                       autocomplete="off">
+                            </div>
+                            
+                            <div class="form-group">
+                                <button class="btn btn-primary" onclick="window.settings.unlockDeveloper()">
+                                    🔓 Войти в режим разработчика
+                                </button>
+                            </div>
                         </div>
                         
-                        <div class="setting-actions">
-                            <button class="btn btn-primary" onclick="window.settings.unlockDeveloper()">
-                                🔓 Войти
-                            </button>
+                        <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                                ⚠️ Инструменты разработчика предназначены для продвинутых пользователей
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -335,29 +322,74 @@ class Settings {
     createDeveloperSettings() {
         return `
             <div class="settings-section" id="developer-settings">
-                <h3 class="settings-section-title">🔧 Настройки разработчика</h3>
+                <h3 class="settings-section-title">🔧 Панель разработчика</h3>
                 
                 <div class="setting-group">
-                    <h4 class="setting-group-title">Инструменты разработчика</h4>
-                    <p style="color: var(--text-warning); margin-bottom: 1rem;">
-                        ⚠️ Эти настройки предназначены только для разработчиков
-                    </p>
+                    <h4 class="setting-group-title">🧪 Инструменты тестирования</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>Тест системы обновлений</span>
+                            <button class="btn btn-warning" onclick="window.app.testUpdateSystem()">
+                                🔄 Тестировать
+                            </button>
+                        </div>
+                        <div class="setting-description">
+                            Запускает имитацию обновления для проверки системы
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>Информация о системе</span>
+                            <button class="btn btn-info" onclick="window.settings.showSystemInfo()">
+                                ℹ️ Показать
+                            </button>
+                        </div>
+                        <div class="setting-description">
+                            Отображает техническую информацию о браузере и системе
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="setting-group">
-                    <div class="setting-actions">
-                        <button class="btn btn-secondary" onclick="window.app.testUpdateSystem()">
-                            🧪 Тест обновления
-                        </button>
-                        <button class="btn btn-info" onclick="window.settings.showSystemInfo()">
-                            ℹ️ Информация о системе
-                        </button>
-                        <button class="btn btn-warning" onclick="window.settings.clearAllData()">
-                            🗑️ Очистить данные
-                        </button>
-                        <button class="btn btn-danger" onclick="window.settings.lockDeveloper()">
-                            🔒 Выйти
-                        </button>
+                    <h4 class="setting-group-title">🗑️ Управление данными</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>Очистить кэш приложения</span>
+                            <button class="btn btn-secondary" onclick="window.settings.clearCache()">
+                                🧹 Очистить кэш
+                            </button>
+                        </div>
+                        <div class="setting-description">
+                            Удаляет временные файлы и кэш браузера
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>Сброс всех настроек</span>
+                            <button class="btn btn-danger" onclick="window.settings.resetAllSettings()">
+                                🔥 Полный сброс
+                            </button>
+                        </div>
+                        <div class="setting-description">
+                            Удаляет ВСЕ данные приложения и возвращает настройки по умолчанию
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h4 class="setting-group-title">🔒 Безопасность</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>Выйти из режима разработчика</span>
+                            <button class="btn btn-secondary" onclick="window.settings.lockDeveloper()">
+                                🔒 Выйти
+                            </button>
+                        </div>
+                        <div class="setting-description">
+                            Заблокировать доступ к инструментам разработчика
+                        </div>
                     </div>
                 </div>
             </div>
@@ -374,11 +406,13 @@ class Settings {
     }
     
     bindSettingsEvents() {
+        // Обработчики вкладок
         document.querySelectorAll('.settings-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const section = e.currentTarget.dataset.section;
                 
                 if (section === 'developer' && !this.isDeveloperUnlocked) {
+                    this.promptDeveloperPassword();
                     return;
                 }
                 
@@ -386,11 +420,23 @@ class Settings {
             });
         });
         
+        // Звуковые настройки
         if (window.soundSettings) {
             window.soundSettings.bindSoundSettingsEvents();
         }
         
+        // Общие настройки
         this.bindGeneralSettings();
+        
+        // Пароль разработчика
+        const passwordInput = document.getElementById('developer-password');
+        if (passwordInput) {
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    this.unlockDeveloper();
+                }
+            });
+        }
     }
     
     bindGeneralSettings() {
@@ -408,15 +454,6 @@ class Settings {
                 });
             }
         });
-        
-        const passwordInput = document.getElementById('developer-password');
-        if (passwordInput) {
-            passwordInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    this.unlockDeveloper();
-                }
-            });
-        }
     }
     
     switchSection(section) {
@@ -438,6 +475,81 @@ class Settings {
         }
     }
     
+    promptDeveloperPassword() {
+        // Создаем модальное окно для ввода пароля
+        const passwordModal = `
+            <div class="modal password-modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">🔐 Авторизация разработчика</h3>
+                    <button onclick="window.modals.hide()" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-container">
+                        <div class="form-group">
+                            <label class="form-label">Пароль</label>
+                            <input type="password" 
+                                   id="modal-developer-password" 
+                                   class="form-input" 
+                                   placeholder="Введите пароль разработчика"
+                                   autocomplete="off"
+                                   autofocus>
+                        </div>
+                        
+                        <div class="form-group" style="display: flex; gap: 1rem; justify-content: center;">
+                            <button class="btn btn-primary" onclick="window.settings.checkModalPassword()">
+                                🔓 Войти
+                            </button>
+                            <button class="btn btn-secondary" onclick="window.modals.hide()">
+                                ❌ Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        window.modals.show(passwordModal);
+        
+        // Обработчик Enter
+        setTimeout(() => {
+            const input = document.getElementById('modal-developer-password');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.checkModalPassword();
+                    }
+                });
+            }
+        }, 100);
+    }
+    
+    checkModalPassword() {
+        const input = document.getElementById('modal-developer-password');
+        if (input && input.value === this.developerPassword) {
+            this.isDeveloperUnlocked = true;
+            window.modals.hide();
+            
+            // Обновляем сайдбар
+            const sidebar = document.querySelector('.settings-sidebar');
+            if (sidebar) {
+                sidebar.innerHTML = this.createSettingsSidebar();
+                this.bindSettingsEvents();
+            }
+            
+            this.switchSection('developer');
+            
+            window.notifications?.success('🎉 Доступ разработчика получен!');
+            if (window.soundSystem) {
+                window.soundSystem.playSuccess();
+            }
+        } else {
+            window.notifications?.error('❌ Неверный пароль');
+            if (window.soundSystem) {
+                window.soundSystem.playError();
+            }
+        }
+    }
+    
     unlockDeveloper() {
         const passwordInput = document.getElementById('developer-password');
         if (passwordInput && passwordInput.value === this.developerPassword) {
@@ -446,16 +558,17 @@ class Settings {
             const sidebar = document.querySelector('.settings-sidebar');
             if (sidebar) {
                 sidebar.innerHTML = this.createSettingsSidebar();
+                this.bindSettingsEvents();
             }
             
             this.switchSection('developer');
             
-            window.notifications?.success('Доступ разработчика получен');
+            window.notifications?.success('🎉 Доступ разработчика получен!');
             if (window.soundSystem) {
                 window.soundSystem.playSuccess();
             }
         } else {
-            window.notifications?.error('Неверный пароль');
+            window.notifications?.error('❌ Неверный пароль');
             if (window.soundSystem) {
                 window.soundSystem.playError();
             }
@@ -469,9 +582,10 @@ class Settings {
         const sidebar = document.querySelector('.settings-sidebar');
         if (sidebar) {
             sidebar.innerHTML = this.createSettingsSidebar();
+            this.bindSettingsEvents();
         }
         
-        window.notifications?.info('Доступ разработчика заблокирован');
+        window.notifications?.info('🔒 Доступ разработчика заблокирован');
     }
     
     setSetting(key, value) {
@@ -487,32 +601,40 @@ class Settings {
         return this.settings[key];
     }
     
-    clearAllData() {
-        if (confirm('Это удалит ВСЕ данные приложения. Продолжить?')) {
+    clearCache() {
+        if (confirm('Очистить кэш приложения?')) {
+            sessionStorage.clear();
+            window.notifications?.success('🧹 Кэш очищен');
+        }
+    }
+    
+    resetAllSettings() {
+        if (confirm('Это удалит ВСЕ настройки и данные приложения!\n\nПродолжить?')) {
             localStorage.clear();
-            window.notifications?.warning('Все данные очищены');
-            setTimeout(() => window.location.reload(), 1000);
+            sessionStorage.clear();
+            window.notifications?.warning('🔥 Все данные удалены');
+            setTimeout(() => window.location.reload(), 1500);
         }
     }
     
     showSystemInfo() {
         const info = {
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            cookieEnabled: navigator.cookieEnabled,
-            onLine: navigator.onLine,
-            screen: `${screen.width}x${screen.height}`,
-            viewport: `${window.innerWidth}x${window.innerHeight}`,
-            localStorage: !!window.localStorage,
-            sessionStorage: !!window.sessionStorage
+            'User Agent': navigator.userAgent,
+            'Платформа': navigator.platform,
+            'Язык': navigator.language,
+            'Cookies': navigator.cookieEnabled ? 'Включены' : 'Отключены',
+            'Онлайн': navigator.onLine ? 'Да' : 'Нет',
+            'Экран': `${screen.width}x${screen.height}`,
+            'Viewport': `${window.innerWidth}x${window.innerHeight}`,
+            'LocalStorage': window.localStorage ? 'Доступно' : 'Недоступно',
+            'SessionStorage': window.sessionStorage ? 'Доступно' : 'Недоступно'
         };
         
         const content = Object.entries(info)
             .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
             .join('<br>');
             
-        window.notifications?.info(`<div style="text-align: left;">${content}</div>`, 10000);
+        window.notifications?.info(`<div style="text-align: left; font-size: 0.9rem;">${content}</div>`, 10000);
     }
 }
 
